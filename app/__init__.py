@@ -13,7 +13,7 @@ migrate = Migrate()
 def create_app():
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/farmart_db'
-    app.config['JWT_SECRET_KEY'] = 'super-secret-key'  # Replace in production
+    app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 
     db.init_app(app)
     jwt.init_app(app)
