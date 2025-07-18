@@ -1,5 +1,5 @@
 import os
 
 class Config:
-    SQLALCHEMY_DATABASE_URI='sqlite://farm.db'
-    SQLALCHEMY_TRACK_MODIFICATION=False
+    SQLALCHEMY_DATABASE_URI='sqlite:///app.db'
+    SQLALCHEMY_TRACK_MODIFICATIONS=False

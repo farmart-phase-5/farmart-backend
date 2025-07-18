@@ -1,33 +1,31 @@
 from flask import Flask
-from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+import sys, os
+sys.path.append(os.path.dirname(__file__))
 from config import Config
-from models.User import db
-from models import jwt
-from controllers.auth_controller import user_bp
-from controllers.login_controller import login_bp
+from flask_migrate import Migrate
+from flask_cors import CORS
+from extension import db, jwt
+from models.farmer import Farmer
+from models.animals import Animals
 
 
+
+
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app,
-     origins=["http://localhost:5173"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-     allow_headers=["Content-Type", "Authorization"],
-     supports_credentials=True)
-    
     db.init_app(app)
-    jwt.init_app(app)
-    print("For debugging purposes JWT Manager initialized")
+    migrate.init_app(app, db)
+    CORS(app)
 
+    from controllers.animals_controller import animals_bp
+    from controllers.cart_controller import cart_bp
 
-    app.register_blueprint(user_bp, url_prefix='/auth')
-    app.register_blueprint(login_bp, url_prefix='/auth')
- 
-
-    with app.app_context():
-        db.create_all()
+    app.register_blueprint(animals_bp, url_prefix='/animals')
+    app.register_blueprint(cart_bp, url_prefix='/cart')
 
     return app
