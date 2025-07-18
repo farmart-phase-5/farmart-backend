@@ -49,4 +49,4 @@ def login():
 @auth_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    return jsonify({"message": "Logout successful. Token should be removed on client."}), 200
+    return jsonify({"message": "Logout successful."}), 200
