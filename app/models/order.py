@@ -1,21 +1,34 @@
 from app import db
-from datetime import datetime 
+from datetime import datetime
 
 class Order(db.Model):
     __tablename__ = 'orders'
 
-    id = db.Column(db.Integer, primary_key = True)
-    user_id = id = db.Column(db.Integer, db.Foreignkey('users.id'), nullable = True)
-    total_price = db.Column(db.String(10), default = 'pending')
-    created_at = db.Column(db.DateTime, default = datetime.utcnow)
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(50), default='pending')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship('User', backref = 'orders')
-    items = db.relationship('OrderItem', backref = 'order', cascade = 'all, delete-orphan')
+    product = db.relationship('Product', backref='orders')
+    user = db.relationship('User', backref='orders')
 
-class OrderItem(db.Model):
-    __tablename__ = 'order_items'
+    def __init__(self, product, user, quantity):
+        self.product = product
+        self.user = user
+        self.quantity = quantity
+        self.total_price = product.price * quantity
+        self.status = 'pending'
 
-    id = db.Column(db.INteger, primary_key = True)
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
-    animal_id = db.Column(db.Integer, db.ForeignKey('animals.id'), nullable=False)
-    animal = db.relationship('Animal')
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "product_id": self.product_id,
+            "user_id": self.user_id,
+            "quantity": self.quantity,
+            "total_price": self.total_price,
+            "status": self.status,
+            "created_at": self.created_at.isoformat()
+        }
