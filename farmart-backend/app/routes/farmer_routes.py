@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from app.models import Farmer  # Make sure this import is correct
-from app import db  # Required if you plan on modifying or querying the DB
+from app.models import Farmer 
+from app import db 
 
 farmer_routes = Blueprint('farmer_routes', __name__)
 
@@ -20,7 +20,7 @@ def register():
     return jsonify({"message": f"Farmer {username} registered successfully"})
 
 
-# ✅ ADD THIS NEW ROUTE HERE
+
 @farmer_routes.route('/farmers', methods=['GET'])
 def get_farmers():
     farmers = Farmer.query.all()

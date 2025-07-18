@@ -12,11 +12,11 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
-    from . import models  # Register models
+    from . import models
     migrate.init_app(app, db)
     CORS(app)
 
-    # ✅ Add the homepage route here
+
     @app.route('/')
     def home():
         return "Hello, Farmart!"
@@ -24,7 +24,7 @@ def create_app():
     from .routes.farmer_routes import farmer_routes
     app.register_blueprint(farmer_routes, url_prefix='/farmer')
 
-    # Import and register the order routes blueprint
+
     from .routes.order_routes import order_routes
     app.register_blueprint(order_routes)
 

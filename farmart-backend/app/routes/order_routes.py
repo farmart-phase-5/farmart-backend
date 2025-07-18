@@ -3,7 +3,7 @@ from app.models import db, Order, Animal
 
 order_routes = Blueprint('order_routes', __name__)
 
-# GET /orders - List all orders
+
 @order_routes.route('/orders', methods=['GET'])
 def get_orders():
     orders = Order.query.all()
@@ -18,7 +18,7 @@ def get_orders():
         })
     return jsonify(result)
 
-# PATCH /orders/<order_id> - Accept or deny an order
+
 @order_routes.route('/orders/<int:order_id>', methods=['PATCH'])
 def update_order(order_id):
     data = request.get_json()
@@ -34,7 +34,7 @@ def update_order(order_id):
     db.session.commit()
     return jsonify({'message': f'Order {order_id} status updated to {status}'})
 
-# DELETE /animals/<animal_id> - Delete an animal
+
 @order_routes.route('/animals/<int:animal_id>', methods=['DELETE'])
 def delete_animal(animal_id):
     animal = Animal.query.get(animal_id)
