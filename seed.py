@@ -1,8 +1,9 @@
-from app import app, db
-from app.models.user import User
-from app.models.products import Product
-from app.models.order import Order
-from app.models.payment import Payment
+from farend import db
+from . import app
+from farend.models.user import User
+from farend.models.products import Product
+from farend.models.order import Order
+from farend.models.payment import Payment
 from datetime import datetime
 
 with app.app_context():
