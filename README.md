@@ -73,7 +73,7 @@ Edit
 flask run
 Visit the API at: http://127.0.0.1:5000/
 
-📬 Postman API Testing Guide
+ Postman API Testing Guide
 1. View All Orders
 Method: GET
 
