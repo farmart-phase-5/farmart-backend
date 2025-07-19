@@ -1,13 +1,12 @@
 Farmart Backend – Farmer Dashboard (Flask API)
-This backend handles the Farmer Dashboard functionality of the Farmart platform. It allows farmers to manage their animal listings and customer orders using a RESTful API built with Flask and SQLAlchemy.
+This backend powers the Farmer Dashboard of the Farmart platform. It allows farmers to manage their animal listings and view customer orders through a RESTful API built using Flask, SQLAlchemy, and PostgreSQL.
 
-Features Implemented
-View all orders from users
+Features
+View all customer orders
 
-Accept or deny an order
+Accept or deny customer orders
 
-Delete animals from listing
-
+Delete listed animals
 Project Structure
 arduino
 Copy
@@ -23,15 +22,15 @@ farmart-backend/
 ├── .env
 ├── Pipfile
 └── run.py
-Setup Instructions
-1. Clone the repository
+🛠 Setup Instructions
+1. Clone the Repository
 bash
 Copy
 Edit
-git clone <your-repository-url>
+git clone git@github.com:farmart-phase-5/farmart-backend.git
 cd farmart-backend
-2. Set up virtual environment
-Make sure you have pipenv installed:
+2. Set Up Virtual Environment
+Make sure pipenv is installed:
 
 bash
 Copy
@@ -44,54 +43,58 @@ Copy
 Edit
 pipenv install
 pipenv shell
-3. Configure your environment
-Create a .env file and include the following:
+3. Configure Environment Variables
+Create a .env file in the project root and add the following:
 
-ini
+env
 Copy
 Edit
 FLASK_APP=run.py
 FLASK_ENV=development
 DATABASE_URL=postgresql://localhost:5432/your_database_name
-Update the DATABASE_URL with your actual PostgreSQL configuration.
+Replace your_database_name with your actual PostgreSQL database name.
 
-4. Set up the database
+Database Setup
+Run the following commands to initialize and migrate the database:
+
 bash
 Copy
 Edit
-flask db init       # Only needed once
+flask db init       # Run only once
 flask db migrate
 flask db upgrade
-Running the Application
+ Running the Application
+
+Start the Flask server:
+
 bash
 Copy
 Edit
 flask run
-Visit the API at:
-http://127.0.0.1:5000/
+Visit the API at: http://127.0.0.1:5000/
 
-How to Test in Postman
-Open Postman and follow the instructions below:
-
-1. View Orders (GET)
+📬 Postman API Testing Guide
+1. View All Orders
 Method: GET
 
 URL: http://127.0.0.1:5000/farmer/orders
 
-Headers: None required
+Headers: None
 
 Body: None
 
-Expected Result: List of all orders made by customers
+Response: Returns a list of customer orders
 
-2. Accept or Deny an Order (PATCH)
+2. Accept or Deny an Order
 Method: PATCH
 
 URL: http://127.0.0.1:5000/farmer/orders/<order_id>
 
-Headers: Content-Type: application/json
+Headers:
 
-Body (raw JSON):
+Content-Type: application/json
+
+Body:
 
 json
 Copy
@@ -99,26 +102,22 @@ Edit
 {
   "status": "accepted"
 }
-Replace "accepted" with "denied" to reject the order.
-Replace <order_id> with the actual order ID.
+Replace "accepted" with "denied" to reject the order. Replace <order_id> with the actual order ID.
 
-3. Delete an Animal (DELETE)
+3. Delete an Animal
 Method: DELETE
 
 URL: http://127.0.0.1:5000/farmer/animals/<animal_id>
 
-Headers: None required
+Headers: None
 
 Body: None
-Replace <animal_id> with the ID of the animal to be removed.
 
-Notes
-Ensure the database is seeded with test data or manually create entries before testing.
+Replace <animal_id> with the ID of the animal to be deleted.
 
-Authentication is not implemented in this version but can be added if needed.
 
-Maintained By
+created  By
 Joel Peace
 Backend Developer – Farmer Dashboard Module
-Phase 5, Moringa School Project
+Phase 5, Moringa School
 
