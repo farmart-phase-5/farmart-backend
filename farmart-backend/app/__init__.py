@@ -12,20 +12,23 @@ def create_app():
     app.config.from_object(Config)
 
     db.init_app(app)
-    from . import models
+    from . import models  
+
     migrate.init_app(app, db)
     CORS(app)
-
 
     @app.route('/')
     def home():
         return "Hello, Farmart!"
 
+    
     from .routes.farmer_routes import farmer_routes
     app.register_blueprint(farmer_routes, url_prefix='/farmer')
 
-
     from .routes.order_routes import order_routes
     app.register_blueprint(order_routes)
+
+    from .routes.animal_routes import animal_routes
+    app.register_blueprint(animal_routes)
 
     return app
