@@ -1,41 +1,31 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models.order import Order
-from app import db
+from controllers.order_controllers import OrderController
 
-order_bp = Blueprint('orders', __name__)
+order_bp = Blueprint('order_bp', __name__)
+
+@order_bp.route('/orders', methods=['GET'])
+@jwt_required()
+def get_orders():
+    user_id = get_jwt_identity()
+    return OrderController.get_orders(user_id)
 
 @order_bp.route('/orders', methods=['POST'])
 @jwt_required()
 def create_order():
-    user = get_jwt_identity()
     data = request.get_json()
-    order = Order(user_id=user['id'], product_id=data['product_id'], quantity=data['quantity'])
-    db.session.add(order)
-    db.session.commit()
-    return jsonify(order.to_dict()), 201
+    user_id = get_jwt_identity()
+    return OrderController.create_order(data, user_id)
 
-@order_bp.route('/orders/<int:id>', methods=['PATCH'])
+@order_bp.route('/orders/<int:order_id>', methods=['PATCH'])
 @jwt_required()
-def update_order(id):
-    user = get_jwt_identity()
-    order = Order.query.get_or_404(id)
-
-    if user['role'] not in ['admin', 'farmer']:
-        return jsonify({'error': 'Unauthorized'}), 403
-
+def update_order(order_id):
     data = request.get_json()
-    order.status = data.get('status', order.status)
-    db.session.commit()
-    return jsonify(order.to_dict()), 200
+    user_id = get_jwt_identity()
+    return OrderController.update_order(order_id, data, user_id)
 
-@order_bp.route('/orders/<int:id>', methods=['DELETE'])
+@order_bp.route('/orders/<int:order_id>', methods=['DELETE'])
 @jwt_required()
-def delete_order(id):
-    user = get_jwt_identity()
-    order = Order.query.get_or_404(id)
-    if user['id'] != order.user_id and user['role'] != 'admin':
-        return jsonify({'error': 'Unauthorized'}), 403
-    db.session.delete(order)
-    db.session.commit()
-    return jsonify({'message': 'Order deleted'}), 200
+def delete_order(order_id):
+    user_id = get_jwt_identity()
+    return OrderController.delete_order(order_id, user_id)

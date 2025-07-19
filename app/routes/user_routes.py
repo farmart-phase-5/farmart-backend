@@ -1,14 +1,21 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models.user import User
+from controllers.user_controllers import UserController
 
-user_bp = Blueprint('users', __name__)
+user_bp = Blueprint('user_bp', __name__)
 
 @user_bp.route('/users', methods=['GET'])
 @jwt_required()
 def get_users():
-    user = get_jwt_identity()
-    if user['role'] != 'admin':
-        return jsonify({'error': 'Unauthorized'}), 403
-    users = User.query.all()
-    return jsonify([u.to_dict() for u in users]), 200
+    return UserController.get_users()
+
+@user_bp.route('/users/<int:user_id>', methods=['PATCH'])
+@jwt_required()
+def update_user(user_id):
+    data = request.get_json()
+    return UserController.update_user(user_id, data)
+
+@user_bp.route('/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(user_id):
+    return UserController.delete_user(user_id)
