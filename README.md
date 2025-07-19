@@ -22,7 +22,7 @@ farmart-backend/
 ├── .env
 ├── Pipfile
 └── run.py
-🛠 Setup Instructions
+ Setup Instructions
 1. Clone the Repository
 bash
 Copy
