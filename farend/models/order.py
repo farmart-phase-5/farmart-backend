@@ -1,18 +1,24 @@
+from extensions import db
 from datetime import datetime
-from farend.models import db
 
 class Order(db.Model):
     __tablename__ = 'orders'
 
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('clients.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Changed from client_name
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    status = db.Column(db.String(20), nullable=False, default="pending")
+    quantity = db.Column(db.Integer, nullable=False)
+    total_price = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='Pending')
 
-    client = db.relationship("Client", back_populates="orders")
-    product = db.relationship("Product", back_populates="orders")
-
-    def __repr__(self):
-        return f"<Order #{self.id} - Client {self.client_id} | Product {self.product_id} | Qty {self.quantity}>"
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'product': self.product.to_dict() if self.product else None,
+            'quantity': self.quantity,
+            'total_price': self.total_price,
+            'created_at': self.created_at.isoformat(),
+            'status': self.status
+        }

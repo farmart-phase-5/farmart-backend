@@ -1,21 +1,36 @@
 from flask import Blueprint, request, jsonify
-from farend.controllers.auth_controllers import AuthController
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token
+from extensions import db
+from farend.models.user import User
+from farend.schema.user_schema import validate_user_data, serialize_user
 
 auth_bp = Blueprint('auth_bp', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    return AuthController.register(data)
+    validated_data, errors = validate_user_data(data)
+    if errors:
+        return jsonify({"error": errors}), 400
+
+    new_user = User(
+        username=validated_data['username'],
+        email=validated_data['email'],
+        role=validated_data.get('role', 'client')
+    )
+    new_user.set_password(validated_data['password'])
+    db.session.add(new_user)
+    db.session.commit()
+    return jsonify({"message": "User registered successfully", "user": serialize_user(new_user)}), 201
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    return AuthController.login(data)
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({"error": "Missing username or password"}), 400
 
-@auth_bp.route('/me', methods=['GET'])
-@jwt_required()
-def profile():
-    user_id = get_jwt_identity()
-    return AuthController.get_profile(user_id)
+    user = User.query.filter_by(username=data['username']).first()
+    if user and user.check_password(data['password']):
+        access_token = create_access_token(identity=user.id)
+        return jsonify({"message": "Login successful", "access_token": access_token, "user": serialize_user(user)}), 200
+    return jsonify({"error": "Invalid credentials"}), 401
