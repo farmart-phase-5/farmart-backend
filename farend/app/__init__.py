@@ -19,7 +19,7 @@ def create_app():
 
     @app.route('/')
     def home():
-        return "Hello, Farmart!"
+        return "Welcome to my Farmat server"
 
     
     from .routes.farmer_routes import farmer_routes

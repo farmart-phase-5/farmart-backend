@@ -25,5 +25,6 @@ class Order(db.Model):
     animal_id = db.Column(db.Integer, db.ForeignKey('animals.id'), nullable=False)
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    quantity = db.Column()
 
     animal = db.relationship('Animal')
