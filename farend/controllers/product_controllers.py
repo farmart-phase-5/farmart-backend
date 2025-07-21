@@ -1,4 +1,4 @@
-from flask import jsonify
+'''from flask import jsonify
 from extensions import db
 from farend.models.products import Product
 from farend.schema.product_schema import validate_product_data, serialize_product, serialize_products
@@ -53,4 +53,4 @@ class ProductController:
         product = Product.query.get_or_404(product_id)
         db.session.delete(product)
         db.session.commit()
-        return jsonify({"message": "Product deleted successfully"}), 200
+        return jsonify({"message": "Product deleted successfully"}), 200'''

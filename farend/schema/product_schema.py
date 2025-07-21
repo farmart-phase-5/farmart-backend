@@ -1,4 +1,4 @@
-from farend.models.products import Product
+'''from farend.models.products import Product
 
 def validate_product_data(data):
     errors = []
@@ -46,4 +46,4 @@ def serialize_product(product):
     }
 
 def serialize_products(products):
-    return [serialize_product(product) for product in products]
+    return [serialize_product(product) for product in products]'''

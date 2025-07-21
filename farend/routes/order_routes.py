@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+'''from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 from farend.controllers.order_controllers import OrderController
 
@@ -29,4 +29,4 @@ def update_order(order_id):
 @order_bp.route('/orders/<int:order_id>', methods=['DELETE'])
 @jwt_required()
 def delete_order(order_id):
-    return OrderController.delete_order(order_id)
+    return OrderController.delete_order(order_id)'''

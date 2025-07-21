@@ -1,4 +1,4 @@
-from farend.models.order import Order
+'''from farend.models.order import Order
 from farend.models.user import User
 from farend.models.products import Product
 
@@ -49,4 +49,4 @@ def serialize_order(order):
     }
 
 def serialize_orders(orders):
-    return [serialize_order(order) for order in orders]
+    return [serialize_order(order) for order in orders]'''

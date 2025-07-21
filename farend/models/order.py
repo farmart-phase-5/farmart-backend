@@ -1,4 +1,4 @@
-from extensions import db
+'''from extensions import db
 from datetime import datetime
 
 class Order(db.Model):
@@ -21,4 +21,4 @@ class Order(db.Model):
             'total_price': self.total_price,
             'created_at': self.created_at.isoformat(),
             'status': self.status
-        }
+        }'''

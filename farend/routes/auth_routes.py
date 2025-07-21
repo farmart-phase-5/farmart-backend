@@ -16,7 +16,7 @@ def register():
     new_user = User(
         username=validated_data['username'],
         email=validated_data['email'],
-        role=validated_data.get('role', 'client')
+        role=validated_data.get('farmer', 'client')
     )
     new_user.set_password(validated_data['password'])
     db.session.add(new_user)
@@ -26,11 +26,11 @@ def register():
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    if not data or 'username' not in data or 'password' not in data:
+    if not data or 'username' and 'password' not in data:
         return jsonify({"error": "Missing username or password"}), 400
 
     user = User.query.filter_by(username=data['username']).first()
     if user and user.check_password(data['password']):
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity = user.id)
         return jsonify({"message": "Login successful", "access_token": access_token, "user": serialize_user(user)}), 200
     return jsonify({"error": "Invalid credentials"}), 401

@@ -1,4 +1,4 @@
-from flask import jsonify
+'''from flask import jsonify
 from extensions import db
 from farend.models.order import Order
 from farend.schema.order_schema import validate_order_data, serialize_order, serialize_orders
@@ -51,4 +51,4 @@ class OrderController:
         order = Order.query.get_or_404(order_id)
         db.session.delete(order)
         db.session.commit()
-        return jsonify({"message": "Order deleted successfully"}), 200
+        return jsonify({"message": "Order deleted successfully"}), 200'''
