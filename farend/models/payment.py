@@ -1,4 +1,4 @@
-from app import db
+from extensions import db
 from datetime import datetime
 
 class Payment(db.Model):
@@ -12,7 +12,7 @@ class Payment(db.Model):
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def serialize(self):
+    def to_dict(self):
         return {
             'id': self.id,
             'order_id': self.order_id,
