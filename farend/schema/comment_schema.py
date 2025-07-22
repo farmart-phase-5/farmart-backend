@@ -6,6 +6,6 @@ class CommentSchema(Schema):
     timestamp = fields.DateTime()
     user = fields.Nested(lambda: UserSchema(only=("id", "username")))
 
-from schema.user_schema import UserSchema
-comment_schema = CommentSchema()
+from .user_schema import UserSchema
+commentschema = CommentSchema()
 comments_schema = CommentSchema(many=True)

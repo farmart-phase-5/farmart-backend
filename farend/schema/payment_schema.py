@@ -1,18 +1,12 @@
 from farend.models.payment import Payment
 from farend.models.user import User
-from farend.models.order import Order
+
 
 def validate_payment_data(data):
     errors = []
     validated_data = {}
 
-    if 'order_id' not in data or not isinstance(data['order_id'], int):
-        errors.append("Order ID is required and must be an integer.")
-    else:
-        if not Order.query.get(data['order_id']):
-            errors.append("Invalid order_id: Order does not exist.")
-        validated_data['order_id'] = data['order_id']
-
+    
     if 'user_id' not in data or not isinstance(data['user_id'], int):
         errors.append("User ID is required and must be an integer.")
     else:
@@ -38,7 +32,7 @@ def validate_payment_data(data):
 def serialize_payment(payment):
     return {
         'id': payment.id,
-        'order_id': payment.order_id,
+      '''  'order_id': payment.order_id,'''
         'user_id': payment.user_id,
         'amount': float(payment.amount),
         'method': payment.method,
