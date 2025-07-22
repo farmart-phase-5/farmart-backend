@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from farend.models.user import User
-from extensions import db
+from farend.extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class AuthController:

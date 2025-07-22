@@ -1,5 +1,5 @@
 from flask import jsonify
-from extensions import db
+from farend.extensions import db
 from farend.models.payment import Payment
 from farend.schema.payment_schema import validate_payment_data, serialize_payment, serialize_payments
 
