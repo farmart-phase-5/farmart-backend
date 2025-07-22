@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.models import Farmer 
 from app import db 
 
+
 farmer_routes = Blueprint('farmer_routes', __name__)
 
 @farmer_routes.route('/register', methods=['POST'])
