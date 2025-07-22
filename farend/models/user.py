@@ -10,8 +10,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='client')
 
-    orders = db.relationship('Order', backref='user', lazy=True)
-    products = db.relationship('Product', backref='farmer', lazy=True)
+    '''orders = db.relationship('Order', backref='user', lazy=True)'''
+    '''products = db.relationship('Product', backref='farmer', lazy=True)'''
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password).decode('utf-8')

@@ -3,14 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
 import os
+from farend.extensions import db, migrate
+from flask_jwt_extended import JWTManager
 
 from farend.routes.auth_routes import auth_bp
 from farend.routes.user_routes import user_bp
 from farend.routes.payment_routes import payment_bp
 from farend.routes.comment_routes import comment_bp
-
-db = SQLAlchemy()
-migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
@@ -19,6 +18,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or 'your-secret-key'
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
+
+    jwt = JWTManager(app)
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -31,14 +32,12 @@ def create_app():
 
     with app.app_context():
         from farend.models.user import User
-        from farend.models.products import Product
-        from farend.models.order import Order
         from farend.models.payment import Payment
-        from farend.models.comments import Comment
+        from farend.models.comments import Comments
 
         @app.route('/')
         def index():
-            comments = Comment.query.order_by(Comment.created_at.desc()).all()
+            comments = Comments.query.order_by(Comments.created_at.desc()).all()
             return jsonify({
                 "message": "Welcome to Farmart API",
                 "comments": [comment.serialize() for comment in comments]

@@ -5,7 +5,7 @@ class Payment(db.Model):
     __tablename__ = 'payments'
 
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    '''order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)'''
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     method = db.Column(db.String(50), default='M-Pesa')
@@ -15,7 +15,7 @@ class Payment(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'order_id': self.order_id,
+        '''    'order_id': self.order_id,'''
             'user_id': self.user_id,
             'amount': self.amount,
             'method': self.method,
