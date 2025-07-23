@@ -10,7 +10,7 @@ from models.farmer import Farmer
 from models.animals import Animals
 
 
-
+ 
 
 migrate = Migrate()
 
