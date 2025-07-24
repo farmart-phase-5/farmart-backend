@@ -4,7 +4,6 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 import os
-
 from farend.extensions import db, migrate
 from models import jwt  
 from models.User import db as legacy_db 
@@ -14,9 +13,18 @@ from farend.routes.auth_routes import auth_bp
 from farend.routes.user_routes import user_bp
 from farend.routes.payment_routes import payment_bp
 from farend.routes.comment_routes import comment_bp
+from models.farmer import Farmer
+from models.animals import Animals
+
+
+ 
+
+migrate = Migrate()
+
 
 def create_app():
     app = Flask(__name__)
+
 
     
     app.config.from_object('config.Config')  
@@ -42,6 +50,10 @@ def create_app():
     app.register_blueprint(comment_bp)
     app.register_blueprint(legacy_user_bp, url_prefix='/auth')
     app.register_blueprint(login_bp, url_prefix='/auth')
+    from controllers.animals_controller import animals_bp
+    from controllers.cart_controller import cart_bp
+    app.register_blueprint(animals_bp, url_prefix='/animals')
+    app.register_blueprint(cart_bp, url_prefix='/cart')
 
     # Import models within app context
     with app.app_context():
@@ -73,3 +85,6 @@ app = create_app()
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+    
