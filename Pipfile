@@ -4,22 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-<<<<<<< HEAD
-=======
-flask = "*"
-flask-sqlalchemy = "*"
+sqlalchemy = "*"
 flask-migrate = "*"
-flask-jwt-extended = "*"
-flask-bcrypt = "*"
-flask-cors = "*"
-gunicorn
->>>>>>> ea83bfd50940aabf3f9256317b186532848ed463
 
 [dev-packages]
 
 [requires]
 python_version = "3.8"
-<<<<<<< HEAD
-=======
-
->>>>>>> ea83bfd50940aabf3f9256317b186532848ed463

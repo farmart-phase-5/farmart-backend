@@ -1,85 +1,85 @@
 from flask import Blueprint, request, jsonify
+from app.models import Order, OrderItem
 from app import db
-from app.models.order_model import Order
-from app.models.order_item_model import OrderItem
 
 order_routes = Blueprint('order_routes', __name__)
 
+# GET all orders
 @order_routes.route('/', methods=['GET'])
 def get_orders():
-    status = request.args.get('status')
-    query = Order.query
-    if status:
-        query = query.filter_by(status=status)
-    orders = query.all()
+    orders = Order.query.all()
     return jsonify([order.to_dict() for order in orders]), 200
 
-
-@order_routes.route('/', methods=['POST'])
-def create_order():
-    data = request.get_json()
-
-    user_id = data.get('user_id')
-    farmer_id = data.get('farmer_id')
-    animal_id = data.get('animal_id')
-    quantity = data.get('quantity')
-    status = data.get('status', 'pending')
-    farmer_notes = data.get('farmer_notes')
-
-
-    if not all([user_id, farmer_id, animal_id, quantity]):
-        return jsonify({'error': 'Missing required fields: user_id, farmer_id, animal_id, quantity'}), 400
-
-    try:
-        
-        new_order = Order(
-            user_id=user_id,
-            farmer_id=farmer_id,
-            status=status,
-            farmer_notes=farmer_notes
-        )
-        db.session.add(new_order)
-        db.session.commit()
-
-        
-        new_item = OrderItem(
-            order_id=new_order.id,
-            animal_id=animal_id,
-            quantity=quantity
-        )
-        db.session.add(new_item)
-        db.session.commit()
-
-        return jsonify(new_order.to_dict()), 201
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-
+# GET order by ID
 @order_routes.route('/<int:id>', methods=['GET'])
 def get_order(id):
     order = Order.query.get_or_404(id)
     return jsonify(order.to_dict()), 200
 
-
+# GET all orders for a user
 @order_routes.route('/users/<int:user_id>/orders', methods=['GET'])
-def get_orders_by_user(user_id):
+def get_user_orders(user_id):
     orders = Order.query.filter_by(user_id=user_id).all()
     return jsonify([order.to_dict() for order in orders]), 200
 
-
+# GET items for an order
 @order_routes.route('/<int:order_id>/items', methods=['GET'])
 def get_order_items(order_id):
-    order = Order.query.get_or_404(order_id)
-    return jsonify([item.to_dict() for item in order.order_items]), 200
-
-
-@order_routes.route('/order_items', methods=['GET'])
-def get_order_items_by_animal():
-    animal_id = request.args.get('animal_id', type=int)
-    if animal_id is None:
-        return jsonify({'error': 'animal_id query parameter is required'}), 400
-
-    items = OrderItem.query.filter_by(animal_id=animal_id).all()
+    items = OrderItem.query.filter_by(order_id=order_id).all()
     return jsonify([item.to_dict() for item in items]), 200
+
+@order_routes.route('/items', methods=['GET'])
+def get_order_items_by_animal():
+    animal_id = request.args.get('animal_id')
+    if animal_id:
+        items = OrderItem.query.filter_by(animal_id=animal_id).all()
+        return jsonify([item.to_dict() for item in items]), 200
+    return jsonify({"error": "animal_id parameter is required"}), 400
+
+# POST a new order (with 1 item)
+@order_routes.route('/', methods=['POST'])
+def create_order():
+    data = request.get_json(force=True)
+
+    print('DEBUG Received JSON:', data)  # Debug line — remove after testing
+
+    user_id = data.get('user_id')
+    farmer_id = data.get('farmer_id')
+    animal_id = data.get('animal_id')
+    quantity = data.get('quantity')
+    status = data.get('status', 'pending')  # Default to 'pending' if not provided
+
+    # Validate required fields
+    if not all([user_id, farmer_id, animal_id, quantity]):
+        return jsonify({'error': 'Missing required fields: user_id, farmer_id, animal_id, quantity'}), 400
+
+    try:
+        # Create the order
+        order = Order(user_id=user_id, farmer_id=farmer_id, status=status)
+        db.session.add(order)
+        db.session.commit()
+
+        # Create one order item
+        item = OrderItem(order_id=order.id, animal_id=animal_id, quantity=quantity)
+        db.session.add(item)
+        db.session.commit()
+
+        return jsonify(order.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# PATCH an order (e.g., update status or other editable fields)
+@order_routes.route('/<int:id>', methods=['PATCH'])
+def update_order(id):
+    order = Order.query.get_or_404(id)
+    data = request.get_json()
+
+    # Only update allowed fields
+    updatable_fields = ['status', 'farmer_notes']
+    for field in updatable_fields:
+        if field in data:
+            setattr(order, field, data[field])
+
+    db.session.commit()
+    return jsonify(order.to_dict()), 200
