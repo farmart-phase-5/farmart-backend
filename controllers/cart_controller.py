@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from models.cart import Cart, CartItem
 from models.animals import Animals
-from extension import db
+from farend.extensions import db
+
 
 cart_bp = Blueprint('cart', __name__)
 

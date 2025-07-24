@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(__file__))
 from config import Config
 from flask_migrate import Migrate
 from flask_cors import CORS
-from extension import db, jwt
+from farmart.extensions import db
 from models.farmer import Farmer
 from models.animals import Animals
 

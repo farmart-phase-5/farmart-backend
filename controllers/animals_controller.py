@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request, abort
 from models.animals import Animals
 from schemas.animal_schema import AnimalSchema
-from extension import db  
+from farend.extensions import db
+
 
 animals_bp = Blueprint('animals', __name__)
 animal_schema = AnimalSchema()

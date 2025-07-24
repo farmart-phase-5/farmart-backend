@@ -1,4 +1,5 @@
-from extension import db
+from farend.extensions import db
+
 from datetime import datetime
 
 class Cart(db.Model):
