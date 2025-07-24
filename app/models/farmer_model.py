@@ -1,4 +1,4 @@
-from app import db  # ✅ Make sure this is at the top
+from app import db  
 
 class Farmer(db.Model):
     __tablename__ = 'farmers'
@@ -9,7 +9,7 @@ class Farmer(db.Model):
     contact = db.Column(db.String(100), nullable=True)
     username = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(100), nullable=False)
-    note = db.Column(db.Text, nullable=True)  # ✅ new line for farmer note
+    note = db.Column(db.Text, nullable=True) 
 
     def to_dict(self):
         return {
@@ -19,5 +19,5 @@ class Farmer(db.Model):
             "contact": self.contact,
             "username": self.username,
             "password": self.password,
-            "note": self.note  # ✅ include it in output
+            "note": self.note 
         }
