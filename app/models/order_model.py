@@ -4,7 +4,7 @@ class Order(db.Model):
     __tablename__ = 'orders'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, nullable=False)  # Add this if you want to track the user
+    user_id = db.Column(db.Integer, nullable=False)  
     farmer_id = db.Column(db.Integer, db.ForeignKey('farmers.id'), nullable=False)
     status = db.Column(db.String(50), nullable=True)
     farmer_notes = db.Column(db.Text, nullable=True)
@@ -13,7 +13,7 @@ class Order(db.Model):
 
     @property
     def total_amount(self):
-        # Sum price * quantity for each order item
+        
         return sum(item.animal.price * item.quantity for item in self.order_items)
 
     def to_dict(self):
