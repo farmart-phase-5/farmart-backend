@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 import os
+
 from farend.extensions import db, migrate
 from models import jwt  
 from models.User import db as legacy_db 
@@ -16,6 +17,7 @@ from farend.routes.comment_routes import comment_bp
 
 def create_app():
     app = Flask(__name__)
+
     
     app.config.from_object('config.Config')  
     app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
@@ -23,16 +25,17 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or 'your-secret-key'
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
-    jwt = JWTManager(app)  
 
+  
+   
     db.init_app(app)
     migrate.init_app(app, db)
-    CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         allow_headers=["Content-Type", "Authorization"],
-         supports_credentials=True)
+    CORS(app, supports_credentials=True, origins=[
+        "http://localhost:5173",
+        "https://farmart-frontend-6fhz.onrender.com"
+    ])
 
-    
+    # Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(payment_bp)
@@ -40,21 +43,31 @@ def create_app():
     app.register_blueprint(legacy_user_bp, url_prefix='/auth')
     app.register_blueprint(login_bp, url_prefix='/auth')
 
+    # Import models within app context
     with app.app_context():
         from farend.models.user import User
         from farend.models.payment import Payment
         from farend.models.comments import Comments
         db.create_all()
 
-        @app.route('/')
-        def index():
-            comments = Comments.query.order_by(Comments.created_at.desc()).all()
-            return jsonify({
-                "message": "Welcome to Farmart API",
-                "comments": [comment.serialize() for comment in comments]
-            }), 200
+    @app.route('/')
+    def home():
+        return jsonify({
+            "message": "Welcome to the Farmart Backend API!",
+            "status": "success"
+        }), 200
+
+    # Optional: API route
+    @app.route('/api')
+    def api_home():
+        comments = Comments.query.order_by(Comments.created_at.desc()).all()
+        return jsonify({
+            "message": "Welcome to Farmart API",
+            "comments": [comment.serialize() for comment in comments]
+        }), 200
 
     return app
+
 
 app = create_app()
 
