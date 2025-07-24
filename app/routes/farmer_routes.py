@@ -5,7 +5,7 @@ from app.models import Farmer
 farmer_routes = Blueprint('farmer_routes', __name__)
 
 # Register a new farmer
-@farmer_routes.route('/farmers/register', methods=['POST'])
+@farmer_routes.route('/register', methods=['POST'])
 def register_farmer():
     data = request.get_json()
     name = data.get('name')
@@ -32,7 +32,7 @@ def register_farmer():
     return jsonify({'message': 'Farmer created successfully'}), 201
 
 # Get all farmers
-@farmer_routes.route('/farmers/', methods=['GET'])
+@farmer_routes.route('/', methods=['GET'])
 def get_farmers():
     farmers = Farmer.query.all()
     result = [{
@@ -46,7 +46,7 @@ def get_farmers():
     return jsonify(result)
 
 # Get a specific farmer by ID
-@farmer_routes.route('/farmers/<int:id>', methods=['GET'])
+@farmer_routes.route('/<int:id>', methods=['GET'])
 def get_farmer(id):
     farmer = Farmer.query.get(id)
     if not farmer:
@@ -62,7 +62,7 @@ def get_farmer(id):
     })
 
 # Update a farmer
-@farmer_routes.route('/farmers/<int:id>', methods=['PATCH'])
+@farmer_routes.route('/<int:id>', methods=['PATCH'])
 def update_farmer(id):
     farmer = Farmer.query.get(id)
     if not farmer:
@@ -80,7 +80,7 @@ def update_farmer(id):
     return jsonify({'message': 'Farmer updated successfully'})
 
 # Delete a farmer
-@farmer_routes.route('/farmers/<int:id>', methods=['DELETE'])
+@farmer_routes.route('/<int:id>', methods=['DELETE'])
 def delete_farmer(id):
     farmer = Farmer.query.get(id)
     if not farmer:

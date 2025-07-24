@@ -4,25 +4,25 @@ from app import db
 
 order_routes = Blueprint('order_routes', __name__)
 
-# GET all orders
+
 @order_routes.route('/', methods=['GET'])
 def get_orders():
     orders = Order.query.all()
     return jsonify([order.to_dict() for order in orders]), 200
 
-# GET order by ID
+
 @order_routes.route('/<int:id>', methods=['GET'])
 def get_order(id):
     order = Order.query.get_or_404(id)
     return jsonify(order.to_dict()), 200
 
-# GET all orders for a user
+
 @order_routes.route('/users/<int:user_id>/orders', methods=['GET'])
 def get_user_orders(user_id):
     orders = Order.query.filter_by(user_id=user_id).all()
     return jsonify([order.to_dict() for order in orders]), 200
 
-# GET items for an order
+
 @order_routes.route('/<int:order_id>/items', methods=['GET'])
 def get_order_items(order_id):
     items = OrderItem.query.filter_by(order_id=order_id).all()
@@ -36,30 +36,29 @@ def get_order_items_by_animal():
         return jsonify([item.to_dict() for item in items]), 200
     return jsonify({"error": "animal_id parameter is required"}), 400
 
-# POST a new order (with 1 item)
+
 @order_routes.route('/', methods=['POST'])
 def create_order():
     data = request.get_json(force=True)
 
-    print('DEBUG Received JSON:', data)  # Debug line — remove after testing
+    print('DEBUG Received JSON:', data) 
 
     user_id = data.get('user_id')
     farmer_id = data.get('farmer_id')
     animal_id = data.get('animal_id')
     quantity = data.get('quantity')
-    status = data.get('status', 'pending')  # Default to 'pending' if not provided
+    status = data.get('status', 'pending')  
 
-    # Validate required fields
     if not all([user_id, farmer_id, animal_id, quantity]):
         return jsonify({'error': 'Missing required fields: user_id, farmer_id, animal_id, quantity'}), 400
 
     try:
-        # Create the order
+        
         order = Order(user_id=user_id, farmer_id=farmer_id, status=status)
         db.session.add(order)
         db.session.commit()
 
-        # Create one order item
+       
         item = OrderItem(order_id=order.id, animal_id=animal_id, quantity=quantity)
         db.session.add(item)
         db.session.commit()
@@ -69,13 +68,13 @@ def create_order():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# PATCH an order (e.g., update status or other editable fields)
+
 @order_routes.route('/<int:id>', methods=['PATCH'])
 def update_order(id):
     order = Order.query.get_or_404(id)
     data = request.get_json()
 
-    # Only update allowed fields
+   
     updatable_fields = ['status', 'farmer_notes']
     for field in updatable_fields:
         if field in data:
