@@ -2,10 +2,10 @@ from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
-import os
-from farend.extensions import db, migrate
 from flask_jwt_extended import JWTManager
+import os
 
+from farend.extensions import db, migrate
 from farend.routes.auth_routes import auth_bp
 from farend.routes.user_routes import user_bp
 from farend.routes.payment_routes import payment_bp
@@ -20,10 +20,13 @@ def create_app():
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
     jwt = JWTManager(app)
-
     db.init_app(app)
     migrate.init_app(app, db)
-    CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"])
+
+    CORS(app, supports_credentials=True, origins=[
+        "http://localhost:5173",
+        "https://farmart-frontend-6fhz.onrender.com"
+    ])
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
@@ -35,13 +38,13 @@ def create_app():
         from farend.models.payment import Payment
         from farend.models.comments import Comments
 
-        @app.route('/')
-        def index():
-            comments = Comments.query.order_by(Comments.created_at.desc()).all()
-            return jsonify({
-                "message": "Welcome to Farmart API",
-                "comments": [comment.serialize() for comment in comments]
-            }), 200
+    @app.route('/api')
+    def api_home():
+        comments = Comments.query.order_by(Comments.created_at.desc()).all()
+        return jsonify({
+            "message": "Welcome to Farmart API",
+            "comments": [comment.serialize() for comment in comments]
+        }), 200
 
     return app
 
