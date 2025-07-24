@@ -14,30 +14,42 @@ from farend.routes.comment_routes import comment_bp
 def create_app():
     app = Flask(__name__)
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///app.db'
+    # Configuration
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or 'your-secret-key'
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
+    # Extensions
     jwt = JWTManager(app)
     db.init_app(app)
     migrate.init_app(app, db)
-
     CORS(app, supports_credentials=True, origins=[
         "http://localhost:5173",
         "https://farmart-frontend-6fhz.onrender.com"
     ])
 
+    # Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(payment_bp)
     app.register_blueprint(comment_bp)
 
+    # Import models within app context
     with app.app_context():
         from farend.models.user import User
         from farend.models.payment import Payment
         from farend.models.comments import Comments
 
+    # Home route to fix 404 error on '/'
+    @app.route('/')
+    def home():
+        return jsonify({
+            "message": "Welcome to the Farmart Backend API!",
+            "status": "success"
+        }), 200
+
+    # Optional: API route
     @app.route('/api')
     def api_home():
         comments = Comments.query.order_by(Comments.created_at.desc()).all()
