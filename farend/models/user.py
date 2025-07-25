@@ -1,5 +1,7 @@
-from farend.extensions import db
 from flask_bcrypt import generate_password_hash, check_password_hash
+import app
+
+db = app.db
 
 class User(db.Model):
     __tablename__ = 'users'

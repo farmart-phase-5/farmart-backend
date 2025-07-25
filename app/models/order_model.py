@@ -1,8 +1,8 @@
 from datetime import datetime
 from app import db
 
-class Order(db.Model):
-    __tablename__ = 'orders'
+class AppOrder(db.Model):
+    __tablename__ = 'app_orders'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)

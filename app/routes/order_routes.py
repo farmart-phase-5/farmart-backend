@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from app.models import Order, db
+from app.models import AppOrder as Order, db
 
 order_routes = Blueprint('order_routes', __name__)
 @order_routes.route('/orders', methods=['GET'])

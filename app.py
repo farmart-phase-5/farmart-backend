@@ -4,60 +4,97 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 import os
+from dotenv import load_dotenv
 
-from farend.extensions import db, migrate
-from farend.routes.auth_routes import auth_bp
-from farend.routes.user_routes import user_bp
-from farend.routes.payment_routes import payment_bp
-from farend.routes.comment_routes import comment_bp
+load_dotenv()
+
+db = SQLAlchemy()
+migrate = Migrate()
+jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
-
-    # Configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instance/farmart.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY') or 'your-secret-key'
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secure-jwt-secret-key-here')
     app.config['JWT_TOKEN_LOCATION'] = ['headers']
-
-    # Extensions
-    jwt = JWTManager(app)
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secure-secret-key-here')
+    
     db.init_app(app)
     migrate.init_app(app, db)
+    jwt.init_app(app)
     CORS(app, supports_credentials=True, origins=[
         "http://localhost:5173",
         "https://farmart-frontend-6fhz.onrender.com"
     ])
-
-    # Blueprints
+    
+    from farend.routes.auth_routes import auth_bp
+    from farend.routes.user_routes import user_bp
+    from farend.routes.payment_routes import payment_bp
+    from farend.routes.comment_routes import comment_bp
+    
     app.register_blueprint(auth_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(payment_bp)
     app.register_blueprint(comment_bp)
-
-    # Import models within app context
+    
+    try:
+        from farend.routes.product_routes import product_bp
+        app.register_blueprint(product_bp)
+    except ImportError:
+        print("Warning: Could not import product_bp from farend.routes.product_routes")
+    
+    try:
+        from farend.routes.order_route import order_bp as farend_order_bp
+        app.register_blueprint(farend_order_bp)
+    except ImportError:
+        print("Warning: Could not import order_bp from farend.routes.order_route")
+    
+    from app.routes.farmer_routes import farmer_routes
+    from app.routes.animal_routes import animal_routes
+    from app.routes.order_routes import order_routes
+    from app.routes.order_item_routes import order_item_routes
+    
+    app.register_blueprint(farmer_routes, url_prefix='/api/farmer')
+    app.register_blueprint(animal_routes, url_prefix='/api/animal')
+    app.register_blueprint(order_routes, url_prefix='/api/order')
+    app.register_blueprint(order_item_routes)
+    
     with app.app_context():
+
         from farend.models.user import User
         from farend.models.payment import Payment
         from farend.models.comments import Comments
-
-    # Home route to fix 404 error on '/'
+        
+        try:
+            from farend.models.products import Product
+        except ImportError:
+            print("Warning: Could not import Product from farend.models.products")
+        
+        try:
+            from farend.models.order import Order as FarendOrder
+        except ImportError:
+            print("Warning: Could not import Order from farend.models.order")
+    
+        from app.models.farmer_model import Farmer
+        from app.models.animal_model import Animal
+        from app.models.order_model import AppOrder
+        from app.models.order_item import OrderItem
+    
     @app.route('/')
     def home():
         return jsonify({
             "message": "Welcome to the Farmart Backend API!",
             "status": "success"
         }), 200
-
-    # Optional: API route
+    
     @app.route('/api')
     def api_home():
-        comments = Comments.query.order_by(Comments.created_at.desc()).all()
         return jsonify({
-            "message": "Welcome to Farmart API",
-            "comments": [comment.serialize() for comment in comments]
+            "message": "Welcome to Farmart API"
         }), 200
-
+    
     return app
 
 app = create_app()

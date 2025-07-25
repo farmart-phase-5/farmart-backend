@@ -1,5 +1,7 @@
-from farend.extensions import db
 from datetime import datetime
+import app
+
+db = app.db
 
 class Payment(db.Model):
     __tablename__ = 'payments'
