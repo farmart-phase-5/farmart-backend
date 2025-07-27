@@ -1,53 +1,22 @@
-from flask import jsonify
-from farend.extensions import db
-from farend.models.user import User
-from farend.schema.user_schema import validate_user_data, serialize_user, serialize_users
+from flask import Blueprint, request, jsonify
+from models.user import User
+from extensions import db
 
-class UserController:
-    @staticmethod
-    def create_user(data):
-        validated_data, errors = validate_user_data(data)
-        if errors:
-            return jsonify({"error": errors}), 400
+user_bp = Blueprint('users', __name__)
+@user_bp.route('/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
 
-        new_user = User(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            role=validated_data.get('role', 'client')
-        )
-        new_user.set_password(validated_data['password'])
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({"message": "User created successfully", "user": serialize_user(new_user)}), 201
+    if not username or not email or not password:
+        return jsonify({'error': 'Missing required fields'}), 400
 
-    @staticmethod
-    def get_users():
-        users = User.query.all()
-        return jsonify({"users": serialize_users(users)}), 200
+    user = User(username=username, email=email)
+    user.set_password(password)
 
-    @staticmethod
-    def get_user(user_id):
-        user = User.query.get_or_404(user_id)
-        return jsonify({"user": serialize_user(user)}), 200
+    db.session.add(user)
+    db.session.commit()
 
-    @staticmethod
-    def update_user(user_id, data):
-        user = User.query.get_or_404(user_id)
-        validated_data, errors = validate_user_data(data)
-        if errors:
-            return jsonify({"error": errors}), 400
-
-        user.username = validated_data.get('username', user.username)
-        user.email = validated_data.get('email', user.email)
-        if 'password' in validated_data:
-            user.set_password(validated_data['password'])
-        user.role = validated_data.get('role', user.role)
-        db.session.commit()
-        return jsonify({"message": "User updated successfully", "user": serialize_user(user)}), 200
-
-    @staticmethod
-    def delete_user(user_id):
-        user = User.query.get_or_404(user_id)
-        db.session.delete(user)
-        db.session.commit()
-        return jsonify({"message": "User deleted successfully"}), 200
+    return jsonify({'message': 'User registered successfully'}), 201

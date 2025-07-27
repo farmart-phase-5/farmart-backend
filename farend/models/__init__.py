@@ -1,5 +1,6 @@
-from .user import User
-from .products import Product
-from .order import Order
+from farend import db
+from farend.models.user import User
+from farend.models.order import Order, OrderItem
+from farend.models.comments import Comments
 
-__all__ = ['User', 'Product', 'Order']
+__all__ = ['User', 'Order', 'OrderItem', 'Comments']
