@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
-from models.user import User
-from extensions import db
+from ..models.user import User
+from ..extensions import db
 
 user_bp = Blueprint('users', __name__)
 @user_bp.route('/register', methods=['POST'])

@@ -1,6 +1,6 @@
 from flask import jsonify, request
-from models.clients import Client
-from extensions import db
+from ..models.clients import Client
+from ..extensions import db
 
 def create_client(data):
     username = data.get('username')

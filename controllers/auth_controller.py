@@ -1,12 +1,12 @@
 from flask import jsonify, session
-from models.user import User
-from extensions import db
+from ..models.user import User
+from ..extensions import db
 
 def register_user(data):
-    username = data.get('username')
-    email = data.get('email')
-    password = data.get('password')
-    role = data.get('role', 'customer')
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    password = data.get('password', '').strip()
+    role = data.get('role', 'customer').strip()
 
     if not username or not email or not password:
         return jsonify({'error': 'Username, email, and password are required'}), 400
@@ -23,13 +23,14 @@ def register_user(data):
     return jsonify({'message': 'User registered successfully', 'role': user.role}), 201
 
 def login_user(data):
-    username = data.get('username')
-    password = data.get('password')
+    username = data.get('username', '').strip()
+    password = data.get('password', '').strip()
 
     if not username or not password:
         return jsonify({'error': 'Username and password required'}), 400
 
     user = User.query.filter_by(username=username).first()
+
     if not user or not user.check_password(password):
         return jsonify({'error': 'Invalid credentials'}), 401
 

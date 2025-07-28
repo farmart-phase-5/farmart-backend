@@ -1,7 +1,7 @@
 from flask import jsonify
-from extensions import db
-from models.comments import Comments
-from models.user import User
+from ..extensions import db
+from ..models.comments import Comments
+from ..models.user import User
 
 def post_comment(user_id, data):
     content = data.get('content')

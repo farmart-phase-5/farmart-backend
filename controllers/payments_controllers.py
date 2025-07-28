@@ -1,7 +1,7 @@
 from flask import jsonify
-from models.payment import Payment
-from models.order import Order
-from extensions import db
+from ..models.payment import Payment
+from ..models.order import Order
+from ..extensions import db
 from datetime import datetime
 
 def create_payment(request):
