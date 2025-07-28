@@ -7,7 +7,7 @@ class Client(db.Model):
     username = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique=True)
     phone = db.Column(db.String(20), nullable=True)
-    role = db.Column(db.String(50), default='client')
+    shipping_address = db.Column(db.Sring(200))
 
     orders = db.relationship('Order', backref='client', lazy=True)
     comments = db.relationship('Comment', backref='client', lazy=True)

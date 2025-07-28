@@ -1,6 +1,6 @@
 from flask import Blueprint
 from controllers.auth_controller import register_user, login_user, logout_user
-from controllers.order_controller import create_order, get_orders, get_order_by_id
+from controllers.order_controller import create_order, get_orders
 from controllers.payments_controllers import create_payment, get_payment
 from controllers.comment_controller import add_comment, get_comments_by_order
 from middlewares.auth_middleware import login_required, roles_required
