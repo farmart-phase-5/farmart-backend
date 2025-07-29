@@ -1,4 +1,4 @@
-from flask import Blueprint, request, session
+from flask import Blueprint, request, g
 from .controllers.auth_controller import register_user, login_user, logout_user
 from .controllers.order_controller import create_order, get_orders, get_order_by_id
 from .controllers.payments_controllers import create_payment, get_payment
@@ -7,6 +7,7 @@ from .middlewares.auth_middleware import login_required
 
 routes_bp = Blueprint('routes', __name__)
 
+# ---------- Auth Routes ----------
 @routes_bp.route('/auth/register', methods=['POST'])
 def register_route():
     data = request.get_json()
@@ -22,6 +23,7 @@ def login_route():
 def logout_route():
     return logout_user()
 
+# ---------- Order Routes ----------
 @routes_bp.route('/orders', methods=['GET'])
 @login_required
 def get_orders_route():
@@ -49,14 +51,14 @@ def create_payment_route():
 def get_payment_route(id):
     return get_payment(id)
 
+# ---------- Comment Routes ----------
 @routes_bp.route('/comments', methods=['POST'])
 @login_required
 def post_comment_route():
     data = request.get_json()
-    user_id = session.get('user_id')
-    return post_comment(user_id, data) 
+    return post_comment(g.user_id, data)
 
 @routes_bp.route('/orders/<int:order_id>/comments', methods=['GET'])
 @login_required
 def get_comments_route(order_id):
-    return get_comments(order_id) 
+    return get_comments(order_id)

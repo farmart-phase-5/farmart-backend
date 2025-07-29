@@ -1,13 +1,13 @@
-from flask import jsonify, session
+from flask import jsonify, g
 from ..extensions import db
 from ..models.order import Order, OrderItem
 from ..models.user import User
 
 def create_order(data):
-    if 'user_id' not in session:
+    if not getattr(g, 'user_id', None):
         return jsonify({'error': 'Authentication required'}), 401
 
-    customer_id = session['user_id']
+    customer_id = g.user_id
     items_data = data.get('items')
 
     if not items_data or not isinstance(items_data, list):
@@ -40,10 +40,10 @@ def create_order(data):
 
 
 def get_orders():
-    if 'user_id' not in session:
+    if not getattr(g, 'user_id', None):
         return jsonify({'error': 'Authentication required'}), 401
 
-    user_id = session['user_id']
+    user_id = g.user_id
     user = User.query.get(user_id)
 
     if not user:
@@ -71,10 +71,10 @@ def get_orders():
 
 
 def get_order_by_id(order_id):
-    if 'user_id' not in session:
+    if not getattr(g, 'user_id', None):
         return jsonify({'error': 'Authentication required'}), 401
 
-    user_id = session['user_id']
+    user_id = g.user_id
     user = User.query.get(user_id)
     order = Order.query.get(order_id)
 

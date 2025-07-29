@@ -4,12 +4,18 @@ from ..extensions import db
 
 def register_user(data):
     username = data.get('username', '').strip()
-    email = data.get('email', '').strip()
+    email = data.get('email', '').strip().lower()
     password = data.get('password', '').strip()
-    role = data.get('role', 'customer').strip()
+    role = data.get('role', 'customer').strip().lower()
 
     if not username or not email or not password:
         return jsonify({'error': 'Username, email, and password are required'}), 400
+
+    if len(password) < 6:
+        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+
+    if role not in ['customer', 'admin']:  # adjust roles as needed
+        return jsonify({'error': 'Invalid role specified'}), 400
 
     if User.query.filter((User.username == username) | (User.email == email)).first():
         return jsonify({'error': 'Username or email already exists'}), 409
