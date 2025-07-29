@@ -119,6 +119,12 @@ def create_animal():
         return jsonify(animal.to_dict()), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+    
+@app.route('/api/auth/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return jsonify({'message': 'Successfully logged out'}), 200
+
 
 @app.route('/animals/<int:animal_id>', methods=['PATCH'])
 @jwt_required()
