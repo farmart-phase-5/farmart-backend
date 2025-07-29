@@ -1,45 +1,56 @@
-from flask import jsonify
-from ..models.payment import Payment
-from ..models.order import Order
-from ..extensions import db
-from datetime import datetime
-
-def create_payment(request):
-    data = request.get_json()
-    order_id = data.get('order_id')
-    amount = data.get('amount')
-    method = data.get('method')
-
-    if not order_id or not amount or not method:
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    order = Order.query.get(order_id)
-    if not order:
-        return jsonify({'error': 'Order not found'}), 404
-
-    payment = Payment(order_id=order_id, amount=amount, method=method)
-    db.session.add(payment)
-    db.session.commit()
-
-    return jsonify({
-        'id': payment.id,
-        'order_id': payment.order_id,
-        'amount': payment.amount,
-        'method': payment.method,
-        'status': payment.status,
-        'paid_at': payment.paid_at.isoformat()
-    }), 201
-
-def get_payment(id):
-    payment = Payment.query.get(id)
-    if not payment:
-        return jsonify({'error': 'Payment not found'}), 404
-
-    return jsonify({
-        'id': payment.id,
-        'order_id': payment.order_id,
-        'amount': payment.amount,
-        'method': payment.method,
-        'status': payment.status,
-        'paid_at': payment.paid_at.isoformat()
-    }), 200
+alembic==1.14.1
+aniso8601==10.0.1
+asttokens==3.0.0
+backcall==0.2.0
+bcrypt==4.3.0
+blinker==1.8.2
+certifi==2025.6.15
+click==8.1.8
+decorator==5.2.1
+distlib==0.3.9
+executing==2.2.0
+Faker==35.2.2
+filelock==3.16.1
+Flask==3.0.3
+Flask-Bcrypt==1.0.1
+Flask-Cors==5.0.0
+Flask-JWT-Extended==4.6.0
+Flask-Migrate==4.1.0
+Flask-RESTful==0.3.10
+Flask-SQLAlchemy==3.1.1
+greenlet==3.1.1
+gunicorn==23.0.0
+importlib_metadata==8.5.0
+importlib_resources==6.4.5
+ipdb==0.13.13
+ipython==8.12.3
+itsdangerous==2.2.0
+jedi==0.19.2
+Jinja2==3.1.6
+Mako==1.3.10
+MarkupSafe==2.1.5
+matplotlib-inline==0.1.7
+packaging==25.0
+parso==0.8.4
+pexpect==4.9.0
+pickleshare==0.7.5
+pipenv==2024.4.1
+platformdirs==4.3.6
+prompt_toolkit==3.0.51
+ptyprocess==0.7.0
+pure_eval==0.2.3
+Pygments==2.19.1
+PyJWT==2.9.0
+python-dateutil==2.9.0.post0
+pytz==2025.2
+six==1.17.0
+SQLAlchemy==2.0.41
+SQLAlchemy-serializer==1.4.12
+stack-data==0.6.3
+tomli==2.2.1
+traitlets==5.14.3
+typing_extensions==4.13.2
+virtualenv==20.31.2
+wcwidth==0.2.13
+Werkzeug==3.0.6
+zipp==3.20.2

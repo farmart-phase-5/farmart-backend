@@ -13,20 +13,33 @@ def create_order(data):
     if not items_data or not isinstance(items_data, list):
         return jsonify({'error': 'Order must contain at least one item'}), 400
 
-    order = Order(customer_id=customer_id)
-    db.session.add(order)
-    db.session.flush() 
+    if len(items_data) == 0:
+        return jsonify({'error': 'Order must contain at least one item'}), 400
+
+    total_amount = 0.0
 
     for item in items_data:
         product_name = item.get('product_name')
         quantity = item.get('quantity')
+        price = item.get('price')
 
-        if not product_name or not isinstance(quantity, int):
-            return jsonify({'error': 'Invalid item format'}), 400
+        if not product_name or not isinstance(quantity, int) or quantity <= 0:
+            return jsonify({'error': 'Each item must have a valid product_name and positive integer quantity'}), 400
 
+        if not isinstance(price, (int, float)) or price < 0:
+            return jsonify({'error': 'Each item must have a valid non-negative price'}), 400
+
+        total_amount += quantity * price
+
+    order = Order(user_id=customer_id, total=total_amount, status='pending')
+    db.session.add(order)
+    db.session.flush() 
+
+    for item in items_data:
         order_item = OrderItem(
-            product_name=product_name,
-            quantity=quantity,
+            product_name=item['product_name'],
+            quantity=item['quantity'],
+            price=item['price'],
             order_id=order.id
         )
         db.session.add(order_item)
@@ -35,7 +48,8 @@ def create_order(data):
 
     return jsonify({
         'message': 'Order created successfully',
-        'order_id': order.id
+        'order_id': order.id,
+        'total': total_amount
     }), 201
 
 
@@ -52,18 +66,25 @@ def get_orders():
     if user.role == 'admin':
         orders = Order.query.all()
     else:
-        orders = Order.query.filter_by(customer_id=user_id).all()
+        orders = Order.query.filter_by(user_id=user_id).all()
 
     result = []
     for order in orders:
+
         items = [{
             'product_name': item.product_name,
-            'quantity': item.quantity
-        } for item in order.items]
+            'quantity': item.quantity,
+            'price': item.price
+        } for item in order.order_items]
+
+        customer = User.query.get(order.user_id)
+        customer_name = customer.username if customer else "Unknown"
 
         result.append({
             'id': order.id,
-            'customer_name': user.username,
+            'customer_name': customer_name,
+            'total': order.total,
+            'status': order.status,
             'items': items
         })
 
@@ -71,6 +92,7 @@ def get_orders():
 
 
 def get_order_by_id(order_id):
+    
     if not getattr(g, 'user_id', None):
         return jsonify({'error': 'Authentication required'}), 401
 
@@ -81,16 +103,22 @@ def get_order_by_id(order_id):
     if not order:
         return jsonify({'error': 'Order not found'}), 404
 
-    if user.role != 'admin' and order.customer_id != user_id:
+    if user.role != 'admin' and order.user_id != user_id:
         return jsonify({'error': 'Unauthorized access'}), 403
 
     items = [{
         'product_name': item.product_name,
-        'quantity': item.quantity
-    } for item in order.items]
+        'quantity': item.quantity,
+        'price': item.price
+    } for item in order.order_items]
+
+    customer = User.query.get(order.user_id)
+    customer_name = customer.username if customer else "Unknown"
 
     return jsonify({
         'id': order.id,
-        'customer_name': user.username if user else "Unknown",
+        'customer_name': customer_name,
+        'total': order.total,
+        'status': order.status,
         'items': items
     }), 200
