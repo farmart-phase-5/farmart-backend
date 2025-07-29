@@ -5,12 +5,18 @@ name = "pypi"
 
 [packages]
 flask = "*"
-flask-sqlalchemy = "*"
-flask-migrate = "*"
 flask-bcrypt = "*"
 flask-cors = "*"
 flask-jwt-extended = "*"
-stripe = "*"
+flask-migrate = "*"
+flask-restful = "*"
+flask-sqlalchemy = "*"
+sqlalchemy = "*"
+sqlalchemy-serializer = "*"
+alembic = "*"
+gunicorn = "*"
+pyjwt = "*"
+faker = "*"
 
 [dev-packages]
 

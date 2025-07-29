@@ -55,7 +55,6 @@ def admin_required(f):
 def home():
     return "these routes are working !"
 
-# Auth Routes
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -91,8 +90,6 @@ def get_current_user():
     user = User.query.get(user_id)
     return jsonify(user.to_dict()), 200
 
-
-# Animal Routes
 @app.route('/animals', methods=['GET'])
 def get_animals():
     animals = Animal.query.all()
@@ -148,7 +145,6 @@ def delete_animal(animal_id):
     db.session.commit()
     return jsonify({'message': 'Animal deleted'}), 200
 
-# Cart Routes
 @app.route('/cart', methods=['GET'])
 @jwt_required()
 def get_cart():
@@ -248,7 +244,3 @@ def get_all_animals_admin():
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-
-# change password
-# handle update profile
-# handle delete profile
