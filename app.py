@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, get_jwt_identity, set_access_cookies
+    JWTManager, jwt_required, create_access_token, get_jwt_identity
 )
 from flask_restful import Api
 from datetime import datetime
@@ -12,8 +12,6 @@ from config import db
 from models import User, Animal, CartItem, Order, OrderItem
 
 app = Flask(__name__)
-
-
 CORS(app,
      origins=[
          "http://localhost:5173",
@@ -24,15 +22,9 @@ CORS(app,
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farm.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-
-app.config['JWT_SECRET_KEY'] = 'super-secret-key'
-app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
-app.config['JWT_COOKIE_CSRF_PROTECT'] = False  
-app.config['JWT_COOKIE_SECURE'] = True         
-app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
 
 
 db.init_app(app)
@@ -58,10 +50,12 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
+
 @app.route("/")
 def home():
     return "these routes are working !"
 
+# Auth Routes
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -84,12 +78,10 @@ def login():
     user = User.query.filter_by(username=data['username']).first()
     if user and user.authenticate(data['password']):
         access_token = create_access_token(identity=user.id)
-        response = jsonify({
+        return jsonify({
             'user': user.to_dict(),
             'access_token': access_token
-        })
-        set_access_cookies(response, access_token)
-        return response, 200
+        }), 200
     return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/me', methods=['GET'])
@@ -99,6 +91,8 @@ def get_current_user():
     user = User.query.get(user_id)
     return jsonify(user.to_dict()), 200
 
+
+# Animal Routes
 @app.route('/animals', methods=['GET'])
 def get_animals():
     animals = Animal.query.all()
@@ -129,16 +123,6 @@ def create_animal():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-from flask_jwt_extended import jwt_required, unset_jwt_cookies
-
-@app.route("/logout", methods=["POST"])
-@jwt_required()
-def logout():
-    response = jsonify({"msg": "Logout successful"})
-    unset_jwt_cookies(response)
-    return response, 200
-
-
 @app.route('/animals/<int:animal_id>', methods=['PATCH'])
 @jwt_required()
 def update_animal(animal_id):
@@ -164,6 +148,7 @@ def delete_animal(animal_id):
     db.session.commit()
     return jsonify({'message': 'Animal deleted'}), 200
 
+# Cart Routes
 @app.route('/cart', methods=['GET'])
 @jwt_required()
 def get_cart():
@@ -263,3 +248,7 @@ def get_all_animals_admin():
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
+# change password
+# handle update profile
+# handle delete profile
