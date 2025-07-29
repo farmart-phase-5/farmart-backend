@@ -11,6 +11,8 @@ from flask_cors import CORS
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
 
+blacklist = set()
+
 app = Flask(__name__)
 CORS(app,
      origins=[
@@ -49,6 +51,12 @@ def admin_required(f):
             }), 403
         return f(*args, **kwargs)
     return decorated
+
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    return jwt_payload["jti"] in blacklist
+
 
 
 @app.route("/")
@@ -92,14 +100,18 @@ def get_current_user():
     return jsonify(user.to_dict()), 200
 
 
-@app.route('/logout', methods=['POST'])
+from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
+
+@app.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():
-    return jsonify({"msg": "Successfully logged out"}), 200
+    jti = get_jwt()["jti"]
+    blacklist.add(jti)
+    return jsonify(msg="Logout successful"), 200
 
 
 
-# Animal Routes
+
 @app.route('/animals', methods=['GET'])
 def get_animals():
     animals = Animal.query.all()
@@ -155,7 +167,7 @@ def delete_animal(animal_id):
     db.session.commit()
     return jsonify({'message': 'Animal deleted'}), 200
 
-# Cart Routes
+
 @app.route('/cart', methods=['GET'])
 @jwt_required()
 def get_cart():
@@ -252,6 +264,11 @@ def get_all_users():
 def get_all_animals_admin():
     animals = Animal.query.all()
     return jsonify([a.to_dict() for a in animals]), 200
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return jsonify(error=str(e)), 500
+
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
