@@ -103,10 +103,13 @@ def get_current_user():
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 
 @app.route("/logout", methods=["POST"])
-@jwt_required()
+@jwt_required(optional=True)
 def logout():
-    jti = get_jwt()["jti"]
-    blacklist.add(jti)
+    jti = get_jwt().get("jti")
+    if not jti:
+        return jsonify(msg="Token is expired or invalid."), 401
+
+    token_blocklist.add(jti)
     return jsonify(msg="Logout successful"), 200
 
 
