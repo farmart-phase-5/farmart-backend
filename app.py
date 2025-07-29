@@ -63,7 +63,7 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 def home():
     return "these routes are working !"
 
-# Auth Routes
+
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
@@ -100,19 +100,14 @@ def get_current_user():
     return jsonify(user.to_dict()), 200
 
 
-from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
+from flask_jwt_extended import get_jwt
 
-@app.route("/logout", methods=["POST"])
+@app.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    jti = get_jwt().get("jti")
-    if not jti:
-        return jsonify(msg="Token is missing or invalid."), 401
-
-    blacklist.add(jti)  
-    return jsonify(msg="Logout successful"), 200
-
-
+    jti = get_jwt()["jti"]
+    blacklist.add(jti)
+    return jsonify({"msg": "Logout successful"}), 200
 
 
 
