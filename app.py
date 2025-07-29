@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, get_jwt_identity
+    JWTManager, jwt_required, create_access_token, get_jwt_identity, set_access_cookies
 )
 from flask_restful import Api
 from datetime import datetime
@@ -12,6 +12,8 @@ from config import db
 from models import User, Animal, CartItem, Order, OrderItem
 
 app = Flask(__name__)
+
+
 CORS(app,
      origins=[
          "http://localhost:5173",
@@ -22,9 +24,15 @@ CORS(app,
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farm.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False  
+app.config['JWT_COOKIE_SECURE'] = True         
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
 
 
 db.init_app(app)
@@ -49,7 +57,6 @@ def admin_required(f):
             }), 403
         return f(*args, **kwargs)
     return decorated
-
 
 @app.route("/")
 def home():
@@ -77,10 +84,12 @@ def login():
     user = User.query.filter_by(username=data['username']).first()
     if user and user.authenticate(data['password']):
         access_token = create_access_token(identity=user.id)
-        return jsonify({
+        response = jsonify({
             'user': user.to_dict(),
             'access_token': access_token
-        }), 200
+        })
+        set_access_cookies(response, access_token)
+        return response, 200
     return jsonify({'error': 'Invalid credentials'}), 401
 
 @app.route('/me', methods=['GET'])
@@ -119,12 +128,12 @@ def create_animal():
         return jsonify(animal.to_dict()), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
-    
+
 @app.route('/api/auth/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    return jsonify({'message': 'Successfully logged out'}), 200
-
+    response = jsonify({'message': 'Successfully logged out'})
+    return response, 200
 
 @app.route('/animals/<int:animal_id>', methods=['PATCH'])
 @jwt_required()
