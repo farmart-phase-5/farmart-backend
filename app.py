@@ -129,11 +129,15 @@ def create_animal():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
-@app.route('/api/auth/logout', methods=['POST'])
+from flask_jwt_extended import jwt_required, unset_jwt_cookies
+
+@app.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():
-    response = jsonify({'message': 'Successfully logged out'})
+    response = jsonify({"msg": "Logout successful"})
+    unset_jwt_cookies(response)
     return response, 200
+
 
 @app.route('/animals/<int:animal_id>', methods=['PATCH'])
 @jwt_required()
