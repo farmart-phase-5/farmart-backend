@@ -92,6 +92,13 @@ def get_current_user():
     return jsonify(user.to_dict()), 200
 
 
+@app.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return jsonify({"msg": "Successfully logged out"}), 200
+
+
+
 # Animal Routes
 @app.route('/animals', methods=['GET'])
 def get_animals():
