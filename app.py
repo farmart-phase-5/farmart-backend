@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, get_jwt_identity
+    JWTManager, jwt_required, create_access_token, get_jwt_identity,get_jwt, jwt_blacklist
 )
+
 from flask_restful import Api
 from datetime import datetime
 from functools import wraps
@@ -82,6 +83,13 @@ def login():
             'access_token': access_token
         }), 200
     return jsonify({'error': 'Invalid credentials'}), 401
+
+@app.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    jti = get_jwt()["jti"]  
+    jwt_blacklist.add(jti)
+    return jsonify({"message": "Successfully logged out"}), 200
 
 @app.route('/me', methods=['GET'])
 @jwt_required()
