@@ -87,13 +87,20 @@ def register():
 def login():
     data = request.get_json()
     user = User.query.filter_by(username=data['username']).first()
+
     if user and user.authenticate(data['password']):
+        expected_role = data.get('role')
+        if expected_role and user.role != expected_role:
+            return jsonify({'error': f'Access denied: {user.role} cannot login as {expected_role}'}), 403
+
         access_token = create_access_token(identity=user.id)
         return jsonify({
             'user': user.to_dict(),
             'access_token': access_token
         }), 200
+
     return jsonify({'error': 'Invalid credentials'}), 401
+
 
 
 @app.route('/me', methods=['GET'])
