@@ -2,14 +2,26 @@ from sqlalchemy.orm import validates, relationship
 from sqlalchemy.ext.hybrid import hybrid_property
 from config import db, bcrypt
 from datetime import datetime
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    _password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(10), nullable=False)
+    username = db.Column(db.String(80), unique=True)
+    email = db.Column(db.String(120), unique=True)
+    _password_hash = db.Column(db.String(128))
+    role = db.Column(db.String(50))
+
+    @property
+    def password(self):
+        raise AttributeError("Password is not readable.")
+
+    @password.setter
+    def password(self, plaintext):
+        self._password_hash = generate_password_hash(plaintext)
+
+    def check_password(self, plaintext):
+        return check_password_hash(self._password_hash, plaintext)
+
 
     animals = db.relationship('Animal', backref='farmer', lazy=True)
     cart_items = db.relationship('CartItem', backref='user', lazy=True)

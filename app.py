@@ -75,7 +75,7 @@ def register():
             email=data['email'],
             role=data['role']
         )
-        user.password_hash = data['password']
+        user.password = data['password']  
         db.session.add(user)
         db.session.commit()
         return jsonify(user.to_dict()), 201
@@ -86,14 +86,22 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    user = User.query.filter_by(username=data['username']).first()
-    if user and user.authenticate(data['password']):
-        access_token = create_access_token(identity=user.id)
-        return jsonify({
-            'user': user.to_dict(),
-            'access_token': access_token
-        }), 200
-    return jsonify({'error': 'Invalid credentials'}), 401
+    email = data.get('email')
+    password = data.get('password')
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user or not user.check_password(password):
+        return jsonify({"error": "Invalid credentials"}), 401
+
+    access_token = create_access_token(identity=user.id)
+
+    return jsonify({
+        "access_token": access_token,
+        "username": user.username,  
+        "role": user.role
+    }), 200
+
 
 
 @app.route('/me', methods=['GET'])
@@ -131,25 +139,27 @@ def forgot_password():
 @app.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
     try:
-        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
+        
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  
     except SignatureExpired:
-        return jsonify({'error': 'Token expired'}), 400
+        return jsonify({'error': 'The reset link has expired'}), 400
     except BadSignature:
-        return jsonify({'error': 'Invalid token'}), 400
+        return jsonify({'error': 'Invalid reset token'}), 400
+
+    data = request.get_json()
+    new_password = data.get('password')
+
+    if not new_password:
+        return jsonify({'error': 'Password is required'}), 400
 
     user = User.query.filter_by(email=email).first()
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
-    data = request.get_json()
-    new_password = data.get('password')
-    if not new_password:
-        return jsonify({'error': 'Password is required'}), 400
-
-    user.password_hash = new_password
+    user.password = new_password  
     db.session.commit()
-    return jsonify({'message': 'Password reset successful'}), 200
 
+    return jsonify({'message': 'Password has been successfully reset'}), 200
 
 
 
