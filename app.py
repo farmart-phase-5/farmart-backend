@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, get_jwt_identity
+    JWTManager, jwt_required, create_access_token,
+    get_jwt_identity, get_jwt
 )
 from flask_restful import Api
 from datetime import datetime
@@ -10,6 +11,7 @@ import os
 from flask_cors import CORS
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature  # <-- NEW
 
 blacklist = set()
 
@@ -21,18 +23,19 @@ CORS(app,
      ],
      supports_credentials=True)
 
-
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farm.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = 'super-secret-key'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
 jwt = JWTManager(app)
+
+# FORGOT/RESET TOKEN SERIALIZER
+serializer = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY'])  # <-- NEW
 
 
 def admin_required(f):
@@ -58,7 +61,6 @@ def check_if_token_revoked(jwt_header, jwt_payload):
     return jwt_payload["jti"] in blacklist
 
 
-
 @app.route("/")
 def home():
     return "these routes are working !"
@@ -80,6 +82,7 @@ def register():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -92,6 +95,7 @@ def login():
         }), 200
     return jsonify({'error': 'Invalid credentials'}), 401
 
+
 @app.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
@@ -99,8 +103,6 @@ def get_current_user():
     user = User.query.get(user_id)
     return jsonify(user.to_dict()), 200
 
-
-from flask_jwt_extended import get_jwt
 
 @app.route('/logout', methods=['POST'])
 @jwt_required()
@@ -110,6 +112,48 @@ def logout():
     return jsonify({"msg": "Logout successful"}), 200
 
 
+# ------------------ 🔐 FORGOT / RESET PASSWORD ------------------
+
+@app.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    email = data.get('email')
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'No user found with this email'}), 404
+
+    token = serializer.dumps(user.email, salt='password-reset-salt')
+    reset_url = f"http://localhost:5173/reset-password/{token}"  # FRONTEND handles this
+
+    return jsonify({'reset_url': reset_url}), 200
+
+
+@app.route('/reset-password/<token>', methods=['POST'])
+def reset_password(token):
+    try:
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
+    except SignatureExpired:
+        return jsonify({'error': 'Token expired'}), 400
+    except BadSignature:
+        return jsonify({'error': 'Invalid token'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    data = request.get_json()
+    new_password = data.get('password')
+    if not new_password:
+        return jsonify({'error': 'Password is required'}), 400
+
+    user.password_hash = new_password
+    db.session.commit()
+    return jsonify({'message': 'Password reset successful'}), 200
+
+# ---------------------------------------------------------------
+
+
+# ------------------- REST OF YOUR ROUTES -----------------------
 
 @app.route('/animals', methods=['GET'])
 def get_animals():
@@ -165,7 +209,6 @@ def delete_animal(animal_id):
     db.session.delete(animal)
     db.session.commit()
     return jsonify({'message': 'Animal deleted'}), 200
-
 
 @app.route('/cart', methods=['GET'])
 @jwt_required()
@@ -271,7 +314,3 @@ def handle_exception(e):
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
-
-# change password
-# handle update profile
-# handle delete profile
