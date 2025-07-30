@@ -11,7 +11,7 @@ import os
 from flask_cors import CORS
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature  # <-- NEW
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature  
 
 blacklist = set()
 
@@ -34,8 +34,8 @@ migrate = Migrate(app, db)
 api = Api(app)
 jwt = JWTManager(app)
 
-# FORGOT/RESET TOKEN SERIALIZER
-serializer = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY'])  # <-- NEW
+
+serializer = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY']) 
 
 
 def admin_required(f):
@@ -112,7 +112,7 @@ def logout():
     return jsonify({"msg": "Logout successful"}), 200
 
 
-# ------------------ 🔐 FORGOT / RESET PASSWORD ------------------
+
 
 @app.route('/forgot-password', methods=['POST'])
 def forgot_password():
@@ -123,7 +123,7 @@ def forgot_password():
         return jsonify({'error': 'No user found with this email'}), 404
 
     token = serializer.dumps(user.email, salt='password-reset-salt')
-    reset_url = f"http://localhost:5173/reset-password/{token}"  # FRONTEND handles this
+    reset_url = f"http://localhost:5173/reset-password/{token}"  
 
     return jsonify({'reset_url': reset_url}), 200
 
@@ -150,10 +150,9 @@ def reset_password(token):
     db.session.commit()
     return jsonify({'message': 'Password reset successful'}), 200
 
-# ---------------------------------------------------------------
 
 
-# ------------------- REST OF YOUR ROUTES -----------------------
+
 
 @app.route('/animals', methods=['GET'])
 def get_animals():
