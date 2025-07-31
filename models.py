@@ -21,7 +21,9 @@ class User(db.Model):
 
     def check_password(self, plaintext):
         return check_password_hash(self._password_hash, plaintext)
-
+    
+    def set_password(self, password):
+        self.password = password
 
     animals = db.relationship('Animal', backref='farmer', lazy=True)
     cart_items = db.relationship('CartItem', backref='user', lazy=True)
