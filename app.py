@@ -1,34 +1,32 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
+    JWTManager, jwt_required, create_access_token, 
+    get_jwt_identity, get_jwt
 )
 from flask_restful import Api
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 import os
 from flask_cors import CORS
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
-
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
-blacklist = set()
-serializer = URLSafeTimedSerializer("super-secret-key")
 
 app = Flask(__name__)
-CORS(app,
-     origins=[
-         "http://localhost:5173",
-         "https://farmart-frontend-6fhz.onrender.com"
-     ],
-     supports_credentials=True)
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farm.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'super-secret-key'
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'super-secret-key')
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+
+
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 
 db.init_app(app)
 migrate = Migrate(app, db)
@@ -36,64 +34,172 @@ api = Api(app)
 jwt = JWTManager(app)
 
 
+CORS(app,
+     origins=[
+         "http://localhost:5173",
+         "https://farmart-frontend-6fhz.onrender.com"
+     ],
+     supports_credentials=True,
+     expose_headers=["Content-Type", "Authorization"],
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+
+
+blacklist = set()
+serializer = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY'])
+
+
 def admin_required(f):
     @wraps(f)
     @jwt_required()
     def decorated(*args, **kwargs):
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify({'error': 'User not found'}), 404
-        if user.role != 'admin':
+        current_user = User.query.get(get_jwt_identity())
+        if not current_user or current_user.role != 'admin':
             return jsonify({
-                'error': 'Admins only',
-                'user_role': user.role,
-                'expected_role': 'admin'
+                'error': 'Admin privileges required',
+                'status': 403
             }), 403
         return f(*args, **kwargs)
     return decorated
+
+def farmer_required(f):
+    @wraps(f)
+    @jwt_required()
+    def decorated(*args, **kwargs):
+        current_user = User.query.get(get_jwt_identity())
+        if not current_user or current_user.role not in ['admin', 'farmer']:
+            return jsonify({
+                'error': 'Farmer privileges required',
+                'status': 403
+            }), 403
+        return f(*args, **kwargs)
+    return decorated
+
 
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
     return jwt_payload["jti"] in blacklist
 
-@app.route("/")
-def home():
-    return "these routes are working !"
+@jwt.revoked_token_loader
+def revoked_token_callback(jwt_header, jwt_payload):
+    return jsonify({
+        'error': 'Token has been revoked',
+        'status': 401
+    }), 401
 
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        'error': 'Bad request',
+        'message': str(error),
+        'status': 400
+    }), 400
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'error': 'Not found',
+        'message': str(error),
+        'status': 404
+    }), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        'error': 'Internal server error',
+        'message': str(error),
+        'status': 500
+    }), 500
+
+
+@app.route('/healthcheck')
+def healthcheck():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+# Auth routes
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
+    
+    
+    required_fields = ['username', 'email', 'password']
+    if not all(field in data for field in required_fields):
+        return jsonify({
+            'error': 'Missing required fields',
+            'required': required_fields
+        }), 400
+    
+    
+    if User.query.filter_by(email=data['email']).first():
+        return jsonify({
+            'error': 'Email already exists'
+        }), 409
+    
     try:
         user = User(
             username=data['username'],
             email=data['email'],
-            role=data['role']
+            role=data.get('role', 'user')
         )
-        user.password = data['password']  
+        user.set_password(data['password'])
         db.session.add(user)
         db.session.commit()
-        return jsonify(user.to_dict()), 201
+        
+    
+        access_token = create_access_token(identity=user.id)
+        
+        return jsonify({
+            'message': 'Registration successful',
+            'access_token': access_token,
+            'token': access_token,
+            'user': user.to_dict(),
+            'expires_in': app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds()
+        }), 201
+        
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        db.session.rollback()
+        return jsonify({
+            'error': 'Registration failed',
+            'message': str(e)
+        }), 500
 
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-
-    user = User.query.filter_by(email=email).first()
-
-    if not user or not user.check_password(password):
-        return jsonify({"error": "Invalid credentials"}), 401
-
+    
+    if not data or 'email' not in data or 'password' not in data:
+        return jsonify({
+            'error': 'Email and password are required'
+        }), 400
+    
+    user = User.query.filter_by(email=data['email']).first()
+    
+    if not user or not user.check_password(data['password']):
+        return jsonify({
+            'error': 'Invalid credentials'
+        }), 401
+    
     access_token = create_access_token(identity=user.id)
-
+    
     return jsonify({
-        "access_token": access_token,
-        "username": user.username,  
-        "role": user.role
+        'message': 'Login successful',
+        'access_token': access_token,
+        'token': access_token,
+        'user': user.to_dict(),
+        'expires_in': app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds()
+    }), 200
+
+@app.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    jti = get_jwt()['jti']
+    blacklist.add(jti)
+    return jsonify({
+        'message': 'Successfully logged out'
     }), 200
 
 @app.route('/me', methods=['GET'])
@@ -101,53 +207,79 @@ def login():
 def get_current_user():
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
+    
+    if not user:
+        return jsonify({
+            'error': 'User not found'
+        }), 404
+    
     return jsonify(user.to_dict()), 200
 
-@app.route('/logout', methods=['POST'])
-@jwt_required()
-def logout():
-    jti = get_jwt()["jti"]
-    blacklist.add(jti)
-    return jsonify({"msg": "Logout successful"}), 200
 
 @app.route('/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.get_json()
-    email = data.get('email')
-    user = User.query.filter_by(email=email).first()
+    
+    if 'email' not in data:
+        return jsonify({
+            'error': 'Email is required'
+        }), 400
+    
+    user = User.query.filter_by(email=data['email']).first()
+    
     if not user:
-        return jsonify({'error': 'No user found with this email'}), 404
-
-    token = serializer.dumps(user.email, salt='password-reset-salt')
-    reset_url = f"http://localhost:5173/reset-password/{token}"  
-
-    return jsonify({'reset_url': reset_url}), 200
+        return jsonify({
+            'error': 'No account with that email exists'
+        }), 404
+    
+    token = serializer.dumps(user.email, salt='password-reset')
+    reset_url = f"https://farmart-frontend-6fhz.onrender.com/reset-password/{token}"
+    
+    return jsonify({
+        'message': 'Password reset link generated',
+        'reset_url': reset_url 
+    }), 200
 
 @app.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
-    try:
-        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
-    except SignatureExpired:
-        return jsonify({'error': 'The reset link has expired'}), 400
-    except BadSignature:
-        return jsonify({'error': 'Invalid reset token'}), 400
-
     data = request.get_json()
-    new_password = data.get('password')
+    
+    if 'password' not in data:
+        return jsonify({
+            'error': 'Password is required'
+        }), 400
+    
+    try:
+        email = serializer.loads(
+            token,
+            salt='password-reset',
+            max_age=3600  
+        )
+        
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            return jsonify({
+                'error': 'User not found'
+            }), 404
+            
+        user.set_password(data['password'])
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Password successfully reset'
+        }), 200
+        
+    except SignatureExpired:
+        return jsonify({
+            'error': 'Reset token has expired'
+        }), 400
+    except BadSignature:
+        return jsonify({
+            'error': 'Invalid reset token'
+        }), 400
 
-    if not new_password:
-        return jsonify({'error': 'Password is required'}), 400
 
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-
-    user.password = new_password
-    db.session.commit()
-
-    return jsonify({'message': 'Password has been successfully reset'}), 200
-
-# ---------------- ANIMAL ROUTES ---------------- #
 @app.route('/animals', methods=['GET'])
 def get_animals():
     animals = Animal.query.all()
