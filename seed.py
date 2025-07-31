@@ -1,16 +1,12 @@
-from faker import Faker
-import random
 from app import app
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
-
-fake = Faker()
 
 with app.app_context():
     db.create_all()
     print("🌱 Seeding database...")
 
-
+    
     OrderItem.query.delete()
     Order.query.delete()
     CartItem.query.delete()
@@ -18,72 +14,46 @@ with app.app_context():
     User.query.delete()
     db.session.commit()
 
-   
-    users = []
-    roles = ['farmer', 'buyer']
-    for _ in range(15):
-        role = random.choice(roles)
-        user = User(
-            username=fake.user_name(),
-            email=fake.unique.email(),
-            role=role
-        )
+
+    users = [
+        User(username="farmer_john", email="john@farmart.com", role="farmer"),
+        User(username="farmer_jane", email="jane@farmart.com", role="farmer"),
+        User(username="buyer_mike", email="mike@buyer.com", role="buyer"),
+        User(username="buyer_susan", email="susan@buyer.com", role="buyer")
+    ]
+    for user in users:
         user.password_hash = "password123"
         db.session.add(user)
-        users.append(user)
     db.session.commit()
 
- 
-    farmers = [u for u in users if u.role == 'farmer']
-    animals = []
-    for _ in range(15):
-        animal = Animal(
-            name=fake.first_name(),
-            type=random.choice(['cow', 'goat', 'chicken', 'sheep']),
-            breed=fake.word(),
-            price=random.randint(1000, 50000),
-            image=fake.image_url(),
-            farmer_id=random.choice(farmers).id
-        )
-        db.session.add(animal)
-        animals.append(animal)
+    
+    animals = [
+        Animal(name="Daisy", type="cow", breed="Friesian", price=20000, image="https://example.com/cow.jpg", farmer_id=users[0].id),
+        Animal(name="Billy", type="goat", breed="Boer", price=7000, image="https://example.com/goat.jpg", farmer_id=users[0].id),
+        Animal(name="Clucky", type="chicken", breed="Kienyeji", price=1200, image="https://example.com/chicken.jpg", farmer_id=users[1].id),
+        Animal(name="Wooly", type="sheep", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+    ]
+    db.session.add_all(animals)
     db.session.commit()
 
-   
-    buyers = [u for u in users if u.role == 'buyer']
-    for _ in range(15):
-        cart_item = CartItem(
-            user_id=random.choice(buyers).id,
-            animal_id=random.choice(animals).id,
-            quantity=random.randint(1, 5)
-        )
-        db.session.add(cart_item)
+    
+    cart_items = [
+        CartItem(user_id=users[2].id, animal_id=animals[0].id, quantity=1),
+        CartItem(user_id=users[3].id, animal_id=animals[2].id, quantity=3),
+    ]
+    db.session.add_all(cart_items)
     db.session.commit()
 
- 
-    for _ in range(15):
-        buyer = random.choice(buyers)
-        order = Order(
-            user_id=buyer.id,
-            status=random.choice(["pending", "shipped", "delivered"])
-        )
-        db.session.add(order)
-        db.session.flush()  
 
-        total_price = 0
-        for _ in range(random.randint(1, 3)):
-            animal = random.choice(animals)
-            quantity = random.randint(1, 3)
-            total_price += animal.price * quantity
+    order1 = Order(user_id=users[2].id, status="pending", total_price=animals[0].price * 1)
+    db.session.add(order1)
+    db.session.flush()  
+    db.session.add(OrderItem(order_id=order1.id, animal_id=animals[0].id, quantity=1))
 
-            order_item = OrderItem(
-                order_id=order.id,
-                animal_id=animal.id,
-                quantity=quantity
-            )
-            db.session.add(order_item)
+    order2 = Order(user_id=users[3].id, status="delivered", total_price=animals[2].price * 3)
+    db.session.add(order2)
+    db.session.flush()
+    db.session.add(OrderItem(order_id=order2.id, animal_id=animals[2].id, quantity=3))
 
-        order.total_price = total_price
     db.session.commit()
-
     print("✅ Done seeding!")
