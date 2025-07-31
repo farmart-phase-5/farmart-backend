@@ -167,31 +167,51 @@ def register():
             'message': str(e)
         }), 500
 
-@app.route('/login', methods=['POST'])
+@app.route('/auth/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    
-    if not data or 'email' not in data or 'password' not in data:
-        return jsonify({
-            'error': 'Email and password are required'
-        }), 400
-    
-    user = User.query.filter_by(email=data['email']).first()
-    
-    if not user or not user.check_password(data['password']):
-        return jsonify({
-            'error': 'Invalid credentials'
-        }), 401
-    
-    access_token = create_access_token(identity=user.id)
-    
-    return jsonify({
-        'message': 'Login successful',
-        'access_token': access_token,
-        'token': access_token,
-        'user': user.to_dict(),
-        'expires_in': app.config['JWT_ACCESS_TOKEN_EXPIRES'].total_seconds()
-    }), 200
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        email = data.get('email')
+        password = data.get('password')
+
+        if not email or not password:
+            return jsonify({"error": "Email and password required"}), 400
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user or not user.check_password(password):
+            return jsonify({"error": "Invalid credentials"}), 401
+
+        access_token = create_access_token(identity=user.id)
+
+        response = jsonify({
+            "access_token": access_token,
+            "token": access_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "role": user.role
+            },
+            "expires_in": 3600
+        })
+        
+        response.set_cookie(
+            'access_token_cookie',
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite='Lax',
+            max_age=3600
+        )
+        
+        return response, 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/logout', methods=['POST'])
 @jwt_required()
