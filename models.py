@@ -22,31 +22,6 @@ class User(db.Model):
     def check_password(self, plaintext):
         return check_password_hash(self._password_hash, plaintext)
 
-
-    animals = db.relationship('Animal', backref='farmer', lazy=True)
-    cart_items = db.relationship('CartItem', backref='user', lazy=True)
-    orders = db.relationship('Order', backref='user', lazy=True)
-
-    def __repr__(self):
-        return f"<User #{self.id} - {self.username} ({self.role})>"
-
-    @validates('email')
-    def validate_email(self, key, email):
-        if email and ('@' not in email or '.' not in email):
-            raise ValueError("Please provide a suitable email address")
-        return email
-
-    @hybrid_property
-    def password_hash(self):
-        raise AttributeError("Password hashes are write-only.")
-
-    @password_hash.setter
-    def password_hash(self, password):
-        self._password_hash = bcrypt.generate_password_hash(password.encode()).decode()
-
-    def authenticate(self, password):
-        return self._password_hash and bcrypt.check_password_hash(self._password_hash, password.encode())
-
     def to_dict(self):
         return {
             "id": self.id,
@@ -54,6 +29,13 @@ class User(db.Model):
             "email": self.email,
             "role": self.role
         }
+
+    @validates('email')
+    def validate_email(self, key, email):
+        if email and ('@' not in email or '.' not in email):
+            raise ValueError("Please provide a suitable email address")
+        return email
+
 
 
 class Animal(db.Model):
