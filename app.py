@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
-    JWTManager, jwt_required, create_access_token,
-    get_jwt_identity, get_jwt
+    JWTManager, jwt_required, create_access_token, get_jwt_identity, get_jwt
 )
 from flask_restful import Api
 from datetime import datetime
@@ -11,9 +10,11 @@ import os
 from flask_cors import CORS
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature  
+
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
 blacklist = set()
+serializer = URLSafeTimedSerializer("super-secret-key")
 
 app = Flask(__name__)
 CORS(app,
@@ -35,9 +36,6 @@ api = Api(app)
 jwt = JWTManager(app)
 
 
-serializer = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY']) 
-
-
 def admin_required(f):
     @wraps(f)
     @jwt_required()
@@ -55,16 +53,13 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
     return jwt_payload["jti"] in blacklist
 
-
 @app.route("/")
 def home():
     return "these routes are working !"
-
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -81,7 +76,6 @@ def register():
         return jsonify(user.to_dict()), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 400
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -102,8 +96,6 @@ def login():
         "role": user.role
     }), 200
 
-
-
 @app.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
@@ -111,16 +103,12 @@ def get_current_user():
     user = User.query.get(user_id)
     return jsonify(user.to_dict()), 200
 
-
 @app.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
     jti = get_jwt()["jti"]
     blacklist.add(jti)
     return jsonify({"msg": "Logout successful"}), 200
-
-
-
 
 @app.route('/forgot-password', methods=['POST'])
 def forgot_password():
@@ -135,12 +123,10 @@ def forgot_password():
 
     return jsonify({'reset_url': reset_url}), 200
 
-
 @app.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
     try:
-        
-        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)  
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
     except SignatureExpired:
         return jsonify({'error': 'The reset link has expired'}), 400
     except BadSignature:
@@ -156,14 +142,12 @@ def reset_password(token):
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
-    user.password = new_password  
+    user.password = new_password
     db.session.commit()
 
     return jsonify({'message': 'Password has been successfully reset'}), 200
 
-
-
-
+# ---------------- ANIMAL ROUTES ---------------- #
 @app.route('/animals', methods=['GET'])
 def get_animals():
     animals = Animal.query.all()
@@ -219,6 +203,7 @@ def delete_animal(animal_id):
     db.session.commit()
     return jsonify({'message': 'Animal deleted'}), 200
 
+# ---------------- CART ROUTES ---------------- #
 @app.route('/cart', methods=['GET'])
 @jwt_required()
 def get_cart():
@@ -276,12 +261,13 @@ def checkout():
     db.session.commit()
     return jsonify(order.to_dict()), 201
 
+# ---------------- ORDERS ---------------- #
 @app.route('/orders', methods=['GET'])
 @jwt_required()
 def get_orders():
     user_id = get_jwt_identity()
     orders = Order.query.filter_by(user_id=user_id).all()
-    return jsonify([o.to_dict() for o in orders]), 200
+    return jsonify([o.to_dict() for o in orders]), 200 
 
 @app.route('/orders/<int:order_id>/status', methods=['PATCH'])
 @jwt_required()
@@ -298,6 +284,7 @@ def update_order_status(order_id):
     db.session.commit()
     return jsonify(order.to_dict()), 200
 
+# ---------------- ADMIN ---------------- #
 @app.route('/admin/orders', methods=['GET'])
 @admin_required
 def get_all_orders():
@@ -315,11 +302,6 @@ def get_all_users():
 def get_all_animals_admin():
     animals = Animal.query.all()
     return jsonify([a.to_dict() for a in animals]), 200
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    return jsonify(error=str(e)), 500
-
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
