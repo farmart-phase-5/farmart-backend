@@ -436,4 +436,4 @@ def get_all_animals_admin():
     return jsonify([a.to_dict() for a in animals]), 200
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5555)))
