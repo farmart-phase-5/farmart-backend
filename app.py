@@ -17,12 +17,12 @@ from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 app = Flask(__name__)
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///farm.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET', 'super-secret-key')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+app.config["JWT_SECRET_KEY"] = "your-strong-secret-key-change-me"  
+app.config["JWT_TOKEN_LOCATION"] = ["cookies"]  
+app.config["JWT_COOKIE_SECURE"] = True  
+app.config["JWT_COOKIE_HTTPONLY"] = True  
+app.config["JWT_COOKIE_SAMESITE"] = "Lax"  
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)  
 
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -167,60 +167,33 @@ def register():
             'message': str(e)
         }), 500
 
-@app.route('/auth/login', methods=['POST'])
+@app.route("/auth/login", methods=["POST"])
 def login():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
+    data = request.get_json()
+    user = User.query.filter_by(email=data["email"]).first()
 
-        email = data.get('email')
-        password = data.get('password')
-
-        if not email or not password:
-            return jsonify({"error": "Email and password required"}), 400
-
-        user = User.query.filter_by(email=email).first()
-
-        if not user or not user.check_password(password):
-            return jsonify({"error": "Invalid credentials"}), 401
-
+    if user and user.check_password(data["password"]):
+        
         access_token = create_access_token(identity=user.id)
-
-        response = jsonify({
-            "access_token": access_token,
-            "token": access_token,
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "username": user.username,
-                "role": user.role
-            },
-            "expires_in": 3600
-        })
         
-        response.set_cookie(
-            'access_token_cookie',
-            value=access_token,
-            httponly=True,
-            secure=True,
-            samesite='Lax',
-            max_age=3600
-        )
         
+        response = jsonify({"message": "Login successful"})
+        set_access_cookies(response, access_token)
         return response, 200
+    else:
+        return jsonify({"error": "Invalid credentials"}), 401
+    
+@app.route("/api/protected", methods=["GET"])
+@jwt_required()  
+def protected():
+    current_user_id = get_jwt_identity()
+    return jsonify({"user_id": current_user_id}), 200
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/logout', methods=['POST'])
-@jwt_required()
+@app.route("/auth/logout", methods=["POST"])
 def logout():
-    jti = get_jwt()['jti']
-    blacklist.add(jti)
-    return jsonify({
-        'message': 'Successfully logged out'
-    }), 200
+    response = jsonify({"message": "Logged out"})
+    unset_jwt_cookies(response) 
+    return response, 200
 
 @app.route('/me', methods=['GET'])
 @jwt_required()
