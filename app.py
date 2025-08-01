@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_migrate import Migrate
 from flask_jwt_extended import (
     JWTManager, jwt_required, create_access_token, 
-    get_jwt_identity, get_jwt
+    get_jwt_identity, get_jwt, set_access_cookies, unset_jwt_cookies
 )
 from flask_restful import Api
 from datetime import datetime, timedelta
@@ -12,6 +12,7 @@ from flask_cors import CORS
 from config import db
 from models import User, Animal, CartItem, Order, OrderItem
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+# from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
 
 
 app = Flask(__name__)
@@ -23,6 +24,7 @@ app.config["JWT_COOKIE_SECURE"] = True
 app.config["JWT_COOKIE_HTTPONLY"] = True  
 app.config["JWT_COOKIE_SAMESITE"] = "Lax"  
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)  
+app.config['UPLOAD_FOLDER'] = os.path.join(os.getcwd(), 'uploads')
 
 
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
