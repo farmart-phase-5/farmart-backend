@@ -66,7 +66,7 @@ farmart-backend/
 
 ---
 
-### 🐮 Animals
+###  Animals
 
 | Endpoint | Method | Description |
 |---------|--------|-------------|
