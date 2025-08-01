@@ -28,10 +28,15 @@ with app.app_context():
 
     
     animals = [
-        Animal(name="Daisy", type="cow", breed="Friesian", price=20000, image="https://example.com/cow.jpg", farmer_id=users[0].id),
-        Animal(name="Billy", type="goat", breed="Boer", price=7000, image="https://example.com/goat.jpg", farmer_id=users[0].id),
-        Animal(name="Clucky", type="chicken", breed="Kienyeji", price=1200, image="https://example.com/chicken.jpg", farmer_id=users[1].id),
-        Animal(name="Wooly", type="sheep", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+        Animal(name="Chicken", type="chicken", breed="Friesian", price=20000, image="https://example.com/cow.jpg", farmer_id=users[0].id),
+        Animal(name="Goat", type="goat", breed="Boer", price=7000, image="https://example.com/goat.jpg", farmer_id=users[0].id),
+        Animal(name="Cow", type="chicken", breed="Kienyeji", price=1200, image="https://example.com/chicken.jpg", farmer_id=users[1].id),
+        Animal(name="Sheep", type="sheep", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+        Animal(name="Pig", type="pig", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+        Animal(name="Duck", type="duck", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+        Animal(name="Turkey", type="turkey", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+        Animal(name="Horse", type="horse", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
+        Animal(name="Goose", type="goose", breed="Dorper", price=15000, image="https://example.com/sheep.jpg", farmer_id=users[1].id),
     ]
     db.session.add_all(animals)
     db.session.commit()

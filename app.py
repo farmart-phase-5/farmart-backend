@@ -330,7 +330,7 @@ def delete_animal(animal_id):
     db.session.commit()
     return jsonify({'message': 'Animal deleted'}), 200
 
-# ---------------- CART ROUTES ---------------- #
+
 @app.route('/cart', methods=['GET'])
 @jwt_required()
 def get_cart():
