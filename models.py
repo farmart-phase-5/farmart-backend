@@ -78,6 +78,7 @@ class Animal(db.Model):
             "type": self.type,
             "breed": self.breed,
             "price": self.price,
+            "image":self.image,
             "farmer_id": self.farmer_id
         }
 
